@@ -23,7 +23,7 @@ class Course(Document):
         'Game Development', 'Other'
     ]
     
-    user_id = fields.IntField(required=True)
+    user_id = fields.StringField(required=True)
     title = fields.StringField(required=True, max_length=255)
     description = fields.StringField(required=True)
     thumbnail = fields.StringField(default='')
