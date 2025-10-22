@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Virtual environment
+venv/
+env/
+
+# Django static and media
+/staticfiles/
+/media/
+
+# Environment variables
+.env
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Docker
+*.pid
+*.seed
+*.bak
+*.swp
+*.DS_Store
+
+# IDE and system
+.vscode/
+.idea/

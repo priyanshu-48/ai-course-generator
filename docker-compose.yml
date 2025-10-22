@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:alpine
+    container_name: ai-course-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    container_name: ai-course-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=your-secret-key-change-in-production
+      - MONGODB_URI=${MONGODB_URI}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - REDIS_URL=redis://redis:6379/0
+      - FRONTEND_URL=http://localhost:5173
+    depends_on:
+      - redis
+    volumes:
+      - ./backend:/app
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  redis_data:
+
+
