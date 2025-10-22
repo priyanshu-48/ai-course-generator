@@ -100,6 +100,7 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     os.getenv('FRONTEND_URL', 'http://localhost:5173'),
     'http://localhost:3000',
+    'https://ai-course-generator-wine.vercel.app',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
