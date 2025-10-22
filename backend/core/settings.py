@@ -105,6 +105,14 @@ CORS_ALLOWED_ORIGINS = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'authorization',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-demo-user', 
+]
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
