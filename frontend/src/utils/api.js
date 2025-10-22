@@ -1,11 +1,20 @@
 import axios from 'axios';
 
+const demoId =
+  localStorage.getItem("demoId") ||
+  (() => {
+    const id = Math.random().toString(36).substring(2, 12);
+    localStorage.setItem("demoId", id);
+    return id;
+  })();
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'X-Demo-User': demoId,
   },
 });
 
@@ -17,9 +26,7 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 api.interceptors.response.use(
@@ -70,9 +77,8 @@ export const coursesAPI = {
   createCourse: (data) => api.post('/api/courses/create/', data),
   deleteCourse: (id) => api.delete(`/api/courses/${id}/`),
   updateProgress: (id, data) => api.post(`/api/courses/${id}/progress/`, data),
-  toggleSubtopic: (courseId, moduleIndex, subtopicIndex) => 
+  toggleSubtopic: (courseId, moduleIndex, subtopicIndex) =>
     api.post(`/api/courses/${courseId}/module/${moduleIndex}/subtopic/${subtopicIndex}/toggle/`),
 };
 
 export default api;
-
