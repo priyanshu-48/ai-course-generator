@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
 from rest_framework.views import APIView
 from mongoengine.errors import DoesNotExist
-from bson import ObjectId
 
 from .models import Course, Module, Subtopic
 from .serializers import (
@@ -16,12 +15,21 @@ from utils.gemini_service import gemini_service
 from utils.youtube_service import youtube_service
 
 
+def get_demo_user_id(request):
+    """
+    Returns a unique demo ID from request headers.
+    Each visitor (frontend browser) has its own random ID stored locally.
+    """
+    demo_id = request.headers.get("X-Demo-User")
+    return demo_id or "anonymous"
+
+
 class CourseListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Return all courses (public)
-        courses = Course.objects()
+        demo_id = get_demo_user_id(request)
+        courses = Course.objects(user_id=demo_id)
         serializer = CourseListSerializer(courses, many=True)
         return Response(serializer.data)
 
@@ -30,16 +38,18 @@ class CourseDetailView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, pk):
+        demo_id = get_demo_user_id(request)
         try:
-            course = Course.objects.get(pk=pk)
+            course = Course.objects.get(pk=pk, user_id=demo_id)
             serializer = CourseDetailSerializer(course)
             return Response(serializer.data)
         except DoesNotExist:
             return Response({'error': 'Course not found'}, status=status.HTTP_404_NOT_FOUND)
 
     def delete(self, request, pk):
+        demo_id = get_demo_user_id(request)
         try:
-            course = Course.objects.get(pk=pk)
+            course = Course.objects.get(pk=pk, user_id=demo_id)
             course.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except DoesNotExist:
@@ -50,6 +60,7 @@ class CourseCreateView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        demo_id = get_demo_user_id(request)
         serializer = CourseCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -59,7 +70,6 @@ class CourseCreateView(APIView):
         thumbnail = serializer.validated_data.get('thumbnail', '')
 
         try:
-            # Generate course using Gemini API
             course_data = gemini_service.generate_course(title, description, category)
             modules = []
 
@@ -88,9 +98,8 @@ class CourseCreateView(APIView):
                 )
                 modules.append(module)
 
-            # Public course (no user_id)
             course = Course(
-                user_id=0,
+                user_id=demo_id,  # each browser/session is isolated
                 title=title,
                 description=description,
                 category=category,
@@ -105,16 +114,19 @@ class CourseCreateView(APIView):
             )
 
         except Exception as e:
-            return Response({'error': f'Failed to generate course: {str(e)}'},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Failed to generate course: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class SubtopicToggleView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, course_id, module_index, subtopic_index):
+        demo_id = get_demo_user_id(request)
         try:
-            course = Course.objects.get(pk=course_id)
+            course = Course.objects.get(pk=course_id, user_id=demo_id)
             module_idx = int(module_index)
             subtopic_idx = int(subtopic_index)
 
@@ -134,8 +146,9 @@ class CourseProgressView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, pk):
+        demo_id = get_demo_user_id(request)
         try:
-            course = Course.objects.get(pk=pk)
+            course = Course.objects.get(pk=pk, user_id=demo_id)
             module_index = request.data.get('module_index')
             subtopic_index = request.data.get('subtopic_index')
 
