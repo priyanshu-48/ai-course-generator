@@ -43,6 +43,16 @@ const Dashboard = () => {
     }
   };
 
+  const [showPopup, setShowPopup] = useState(false);
+
+  useEffect(() => {
+    const seen = localStorage.getItem("demoPopupSeen");
+    if (!seen) {
+      setShowPopup(true);
+      localStorage.setItem("demoPopupSeen", "true");
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
@@ -196,6 +206,23 @@ const Dashboard = () => {
           </div>
         )}
       </div>
+          {showPopup && (
+      <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm text-center">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-3">Welcome to the Demo!</h2>
+          <p className="text-gray-600 mb-6 leading-relaxed">
+            Start by clicking the <strong>Add Course</strong> button to generate your
+            first AI-powered course.
+          </p>
+          <button
+            onClick={() => setShowPopup(false)}
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+          >
+            Got it
+          </button>
+        </div>
+      </div>
+    )}
     </div>
   );
 };
