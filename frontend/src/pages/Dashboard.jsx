@@ -6,20 +6,22 @@ import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
   const [courses, setCourses] = useState([]);
-  const [backendAwake, setBackendAwake] = useState(false); 
+  const [backendAwake, setBackendAwake] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
 
+  // ✅ Wake backend before showing dashboard
   useEffect(() => {
     const wakeBackend = async () => {
       try {
-        await fetch("https://ai-course-generator-emo8.onrender.com/ping/", {
-          mode: "no-cors",
+        await fetch('https://ai-course-generator-emo8.onrender.com/ping/', {
+          mode: 'no-cors',
         });
       } catch (err) {
-        console.error("Backend ping failed:", err);
+        console.error('Backend ping failed:', err);
       } finally {
-        setTimeout(() => setBackendAwake(true), 1000);
+        setTimeout(() => setBackendAwake(true), 1000); // short delay to let Render start
       }
     };
 
@@ -39,16 +41,15 @@ const Dashboard = () => {
     }
   };
 
-  const [showPopup, setShowPopup] = useState(false);
-
   useEffect(() => {
-    const seen = localStorage.getItem("demoPopupSeen");
+    const seen = localStorage.getItem('demoPopupSeen');
     if (!seen) {
       setShowPopup(true);
-      localStorage.setItem("demoPopupSeen", "true");
+      localStorage.setItem('demoPopupSeen', 'true');
     }
   }, []);
 
+  // ✅ Show wake-up screen until backend is ready
   if (!backendAwake) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-50">
@@ -60,6 +61,7 @@ const Dashboard = () => {
     );
   }
 
+  // ✅ Dashboard after backend is ready
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
@@ -77,7 +79,12 @@ const Dashboard = () => {
               to="/add-course"
               className="btn-primary flex items-center space-x-2"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -90,15 +97,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="loading-spinner"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            {error}
-          </div>
-        ) : courses.length === 0 ? (
+        {courses.length === 0 ? (
           <div className="text-center py-16">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg
@@ -115,12 +114,22 @@ const Dashboard = () => {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">No courses yet</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              No courses yet
+            </h3>
             <p className="text-gray-600 mb-6">
               Create your first AI-generated course to start learning!
             </p>
-            <Link to="/add-course" className="btn-primary inline-flex items-center space-x-2">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <Link
+              to="/add-course"
+              className="btn-primary inline-flex items-center space-x-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -180,12 +189,16 @@ const Dashboard = () => {
                   <div className="mb-4">
                     <div className="flex justify-between text-xs text-gray-600 mb-2">
                       <span>Progress</span>
-                      <span className="font-medium">{course.progress_percentage}%</span>
+                      <span className="font-medium">
+                        {course.progress_percentage}%
+                      </span>
                     </div>
                     <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary-500 transition-all duration-300"
-                        style={{ width: `${course.progress_percentage}%` }}
+                        style={{
+                          width: `${course.progress_percentage}%`,
+                        }}
                       ></div>
                     </div>
                   </div>
@@ -213,26 +226,28 @@ const Dashboard = () => {
           </div>
         )}
       </div>
-          {showPopup && (
-      <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm text-center">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-3">Welcome to the Demo!</h2>
-          <p className="text-gray-600 mb-6 leading-relaxed">
-            Start by clicking the <strong>Add Course</strong> button to generate your
-            first AI-powered course.
-          </p>
-          <button
-            onClick={() => setShowPopup(false)}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
-          >
-            Got it
-          </button>
+
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm text-center">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-3">
+              Welcome to the Demo!
+            </h2>
+            <p className="text-gray-600 mb-6 leading-relaxed">
+              Start by clicking the <strong>Add Course</strong> button to
+              generate your first AI-powered course.
+            </p>
+            <button
+              onClick={() => setShowPopup(false)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition"
+            >
+              Got it
+            </button>
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 };
 
 export default Dashboard;
-
