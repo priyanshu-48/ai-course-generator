@@ -6,36 +6,32 @@ import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
   const [courses, setCourses] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [backendAwake, setBackendAwake] = useState(false); 
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
 
   useEffect(() => {
-    loadCourses();
+    const wakeBackend = async () => {
+      try {
+        await fetch("https://ai-course-generator-emo8.onrender.com/ping/", {
+          mode: "no-cors",
+        });
+      } catch (err) {
+        console.error("Backend ping failed:", err);
+      } finally {
+        setTimeout(() => setBackendAwake(true), 1000);
+      }
+    };
+
+    wakeBackend();
   }, []);
 
-  const loadCourses = async () => {
-    try {
-      const response = await coursesAPI.listCourses();
-      setCourses(response.data);
-    } catch (err) {
-      setError('Failed to load courses');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm('Are you sure you want to delete this course?')) {
-      return;
-    }
+    if (!window.confirm('Are you sure you want to delete this course?')) return;
 
     try {
       await coursesAPI.deleteCourse(courseId);
       setCourses(courses.filter((course) => course.id !== courseId));
-      
       const userResponse = await authAPI.getProfile();
       updateUser(userResponse.data);
     } catch (err) {
@@ -52,6 +48,17 @@ const Dashboard = () => {
       localStorage.setItem("demoPopupSeen", "true");
     }
   }, []);
+
+  if (!backendAwake) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-50">
+        <p className="text-lg font-medium">⚙️ Waking up backend server...</p>
+        <p className="text-sm text-gray-500 mt-2">
+          This may take 15–30 seconds on free hosting.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50">

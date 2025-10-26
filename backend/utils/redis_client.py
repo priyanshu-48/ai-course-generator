@@ -24,3 +24,4 @@ def get_redis_client():
 
 
 redis_client = get_redis_client()
+
