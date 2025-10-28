@@ -27,6 +27,21 @@ const Dashboard = () => {
     wakeBackend();
   }, []);
 
+  useEffect(() => {
+  const fetchCourses = async () => {
+    try {
+      const response = await coursesAPI.listCourses();
+      console.log("Fetched courses:", response.data);
+      setCourses(response.data);
+    } catch (err) {
+      console.error("Failed to load courses:", err);
+    }
+  };
+
+  fetchCourses();
+}, []);
+
+
   const handleDeleteCourse = async (courseId) => {
     if (!window.confirm('Are you sure you want to delete this course?')) return;
 
