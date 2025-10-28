@@ -11,7 +11,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
 
-  // ✅ Wake backend before showing dashboard
   useEffect(() => {
     const wakeBackend = async () => {
       try {
@@ -21,7 +20,7 @@ const Dashboard = () => {
       } catch (err) {
         console.error('Backend ping failed:', err);
       } finally {
-        setTimeout(() => setBackendAwake(true), 1000); // short delay to let Render start
+        setTimeout(() => setBackendAwake(true), 1000); 
       }
     };
 
@@ -49,7 +48,6 @@ const Dashboard = () => {
     }
   }, []);
 
-  // ✅ Show wake-up screen until backend is ready
   if (!backendAwake) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-center bg-gray-50">
@@ -61,7 +59,6 @@ const Dashboard = () => {
     );
   }
 
-  // ✅ Dashboard after backend is ready
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar />
