@@ -1,168 +1,150 @@
-# AI Course Generator 🎓
+# AI Course Generator
 
-A production-grade, full-stack web application that uses Google Gemini 2.5 Pro AI to automatically generate comprehensive, structured learning courses on any topic.
+An AI-powered web application that generates structured learning courses from a simple topic description.  
+It leverages Google Gemini for curriculum generation, YouTube integration for relevant videos, and a progress-tracking dashboard for learners.
 
-## 🌟 Features
+---
 
-- **AI-Powered Course Generation**: Leverage Google Gemini AI to create detailed course roadmaps with modules, subtopics, and content
-- **Authentication System**: Secure JWT-based authentication with user registration and login
-- **Progress Tracking**: Track your learning progress with visual indicators and completion markers
-- **Video Integration**: Curated YouTube videos embedded for each lesson
-- **Plan-Based Limits**: Free tier with 3 courses, upgradeable plans for unlimited courses
-- **Modern UI**: Clean, responsive design built with Tailwind CSS
-- **MongoDB Storage**: All courses and progress saved to cloud database
+## Overview
 
-## 🏗️ Architecture
+The **AI Course Generator** transforms a user’s idea into a structured, multi-module learning course.  
+Users can enter a topic, and the system automatically generates modules, subtopics, and video references — creating a personalized self-learning experience.
 
-### Backend (Django + DRF)
-- RESTful API with Django REST Framework
-- JWT authentication with SimpleJWT
-- MongoDB integration via djongo
-- Google Gemini AI API integration
-- User and course management
+### Key Features
+- **AI-Powered Course Generation** – Automatically generate a structured course from a short topic or description.
+- **YouTube Video Enrichment** – Dynamically fetches and embeds relevant videos for each subtopic.
+- **Progress Tracking** – Mark subtopics as complete and visualize learning progress.
+- **Demo Mode** – Instantly try the app without login; anonymous sessions are tracked via browser-generated IDs.
+- **JWT Authentication** – Secure login and token-based session handling for registered users.
 
-### Frontend (React + Vite)
-- Modern React 18 with Vite
-- Tailwind CSS for styling
-- React Router for navigation
-- Axios for API communication
-- Context API for state management
+---
 
-## 📁 Project Structure
+## System Architecture
 
-```
-ai-course-generator/
-├── backend/
-│   ├── core/              # Django project settings
-│   ├── users/             # User authentication app
-│   ├── courses/           # Course management app
-│   ├── utils/             # Utility services (Gemini AI)
-│   ├── manage.py
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── context/       # React context providers
-│   │   ├── pages/         # Page components
-│   │   ├── utils/         # API utilities
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── tailwind.config.js
-│
-└── README.md
-```
+The project is built as a **three-tier full-stack system**:
 
-## 📱 Usage
+### 1. Frontend (React + Vite)
+- Single-page application for course generation and viewing.
+- AuthContext manages user sessions and demo mode.
+- Axios client handles authenticated API requests with token refresh.
+- Modern component-based UI built with Tailwind CSS.
 
-1. **Register/Login**: Create an account or sign in
-2. **Create Course**: Click "Add Course" and fill in:
-   - Course title
-   - Category
-   - Description (be specific for better AI results)
-3. **Wait for Generation**: AI generates course structure (10-30 seconds)
-4. **Start Learning**: Navigate through modules and lessons
-5. **Track Progress**: Mark lessons complete and see your progress
+### 2. Backend (Django REST Framework)
+- Exposes REST APIs for user auth, course generation, progress tracking, and course retrieval.
+- Integrates with Google Gemini for AI-generated course content.
+- Communicates with YouTube Data API to resolve video URLs.
+- Uses Redis for caching YouTube search results and improving response time.
 
-## 🎨 Features Walkthrough
+### 3. Database Layer
+- **MongoDB (via MongoEngine)** – Stores course documents as nested structures (Course → Modules → Subtopics).
+- **Relational Database (Django default)** – Handles user data and authentication.
+- The hybrid model combines the flexibility of NoSQL with Django’s robust relational features.
 
-### Landing Page
-- Hero section with call-to-action
-- Feature highlights
-- Redirects authenticated users to dashboard
+---
 
-### Dashboard
-- Grid view of all your courses
-- Progress visualization
-- Quick access to course content
-- Course deletion
+##  Data Flow
 
-### Course Page
-- Module sidebar for navigation
-- Embedded YouTube videos
-- AI-generated explanations
-- Completion tracking
-- Progress percentage
+1. **User Input**  
+   The user enters a topic and submits it through the React frontend.
 
-### Add Course
-- Simple form for course details
-- AI generation with loading states
-- Error handling for limits
+2. **AI Generation**  
+   The backend sends a structured prompt to Gemini and receives a JSON response with modules and subtopics.
 
-## 🔒 Security Features
+3. **Video Enrichment**  
+   Each subtopic containing `search:` keywords is passed through a YouTube search and cached in Redis.
 
-- JWT token authentication
-- Automatic token refresh
-- Protected API endpoints
-- Secure password hashing
-- CORS configuration
-- Environment variable protection
+4. **Storage**  
+   The fully formed course document is saved to MongoDB.
 
-## 🎯 API Endpoints
+5. **Frontend Display**  
+   The React dashboard fetches the structured data and renders the complete course view with progress indicators.
 
-### Authentication
-- `POST /api/users/register/` - Register user
-- `POST /api/users/login/` - Login user
-- `POST /api/users/logout/` - Logout user
-- `GET /api/users/profile/` - Get user profile
+6. **Progress Tracking**  
+   When users mark subtopics as complete, the backend updates the MongoDB document and recalculates completion percentages.
 
-### Courses
-- `GET /api/courses/` - List courses
-- `POST /api/courses/create/` - Create course (AI generation)
-- `GET /api/courses/<id>/` - Get course details
-- `DELETE /api/courses/<id>/` - Delete course
-- `POST /api/courses/<id>/progress/` - Update progress
-- `POST /api/courses/subtopics/<id>/toggle/` - Toggle completion
+---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### Backend
-- Django 4.2
-- Django REST Framework
-- MongoDB (djongo)
-- JWT (SimpleJWT)
-- Google Generative AI
-- CORS Headers
+|         Layer         |            Technology          |                   Purpose                      |
+|-----------------------|--------------------------------|------------------------------------------------|
+| **Frontend**          | React + Vite + Tailwind CSS    | SPA UI, state management, responsive dashboard |
+| **Backend**           | Django + Django REST Framework | API endpoints, auth, and orchestration         |
+| **AI Integration**    | Google Gemini API              | Course content generation                      |
+| **Cache**             | Redis                          | Caching YouTube video lookups                  |
+| **Database**          | MongoDB (via MongoEngine)      | Hierarchical course content storage            |
+| **Auth**              | JWT (SimpleJWT)                | Secure token-based user authentication         |
+| **Deployment**        | Docker + Gunicorn              | Containerized and scalable deployment          |
 
-### Frontend
-- React 18
-- Vite
-- Tailwind CSS
-- React Router
-- Axios
+---
 
-## 📝 Development Guidelines
+## Setup Instructions
 
-- Follow Django best practices
-- Use REST API conventions
-- Implement error handling
-- Write clean, commented code
-- Test authentication flows
-- Validate user inputs
-- Handle loading states
+### Prerequisites
+- Node.js (>=18)
+- Python (>=3.10)
+- MongoDB
+- Redis (optional but recommended)
+- Google Gemini API key
+- YouTube Data API key
 
-## 🤝 Contributing
+### 1. Clone the repository
+bash
+git clone https://github.com/priyanshu-48/ai-course-generator.git
+cd ai-course-generator
 
-This is a production-ready educational project. Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
-- Improve documentation
+---
 
+### 2. Backend Setup
 
-## 🎓 Learning Resources
+cd backend
+pip install -r requirements.txt
+cp .env.example .env  # add API keys and Mongo URI
+python manage.py migrate
+python manage.py runserver
 
-Built as a comprehensive full-stack project demonstrating:
-- Django REST API development
-- React SPA architecture
-- MongoDB integration
-- AI API integration
-- JWT authentication
-- Modern UI/UX design
+### 3. Frontend Setup
+cd frontend
+npm install
+npm run dev
+The app will be available at http://localhost:5173
 
+## Environment Variables
 
+The following variables must be set in .env:
 
+Variable	            |Description                      |
+---------------------|---------------------------------|
+GEMINI_API_KEY	      |Google Gemini API key            |
+YOUTUBE_API_KEY	   |YouTube Data API key             |
+MONGODB_URI	         |Connection string for MongoDB    |
+REDIS_URL	         |Redis connection URL (optional)  |
+SECRET_KEY	         |Django secret key                |
 
+## Design Decisions
 
+   - Hybrid storage: MongoDB for hierarchical course content and Django ORM for user data provide both flexibility and reliability.
+   - Structured AI integration: The Gemini service enforces strict JSON output to ensure predictable parsing.
+   - Caching layer: Redis prevents redundant API calls, improving response times and reducing costs.
+   - Demo mode isolation: Each browser gets a unique demo ID, enabling anonymous exploration without shared state.
 
+## Scalability Considerations
+
+   - Move AI generation to background jobs using Celery/RQ for better concurrency.
+   - Use CDN and HTTP caching for static assets and course reads.
+   - Introduce API rate limiting and request throttling for generation endpoints.
+   - Migrate to managed MongoDB clusters with proper indexing on user_id and created_at.
+   - Horizontal scaling of Django API workers behind a load balancer.
+
+## Future Improvements
+
+   - Asynchronous task queue for AI generation.
+   - WebSocket or long-polling for progress updates.
+   - Enhanced course analytics and recommendations.
+   - Role-based accounts (students/instructors).
+   - Integration with other content sources (e.g., PDFs, articles).
+
+## License
+
+This project is released under the MIT License.
+You are free to use, modify, and distribute this software with attribution.
