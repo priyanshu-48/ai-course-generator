@@ -105,3 +105,45 @@ def test_missing_demo_header_shares_anonymous_bucket(client):
     """Documents a known gap: no X-Demo-User header means the shared 'anonymous' scope."""
     c = make_course('anonymous')
     assert client.get(f'/api/courses/{c.pk}/').status_code == 200
+
+
+@responses.activate
+def test_video_resolution_preserves_order_and_dedupes(client, gen, redis_fake):
+    """Each subtopic keeps its own video, and a repeated search term costs one YouTube call."""
+    def cb(request):
+        import json
+        q = request.params['q']
+        return (200, {}, json.dumps({'items': [{'id': {'videoId': 'id-' + q.replace(' ', '-')}}]}))
+    responses.add_callback(responses.GET, youtube_service.base_url, callback=cb)
+    r = client.post('/api/courses/create/', PAYLOAD, format='json', **H)
+    urls = [s['video_url'] for m in r.data['modules'] for s in m['subtopics']]
+    assert urls == [
+        'https://www.youtube.com/watch?v=id-x-basics',
+        'https://www.youtube.com/watch?v=id-why-x',
+        'https://www.youtube.com/watch?v=id-x-deep-dive',
+        'https://www.youtube.com/watch?v=id-x-basics',
+    ]
+    assert len(responses.calls) == 3
+
+
+def test_video_lookups_run_concurrently_but_bounded(client, monkeypatch, redis_fake):
+    import threading
+    import time
+    from courses import views
+    big = {'modules': [{'title': 'M', 'subtopics': [
+        {'title': f't{i}', 'video_url': f'search:term {i}', 'content': 'c'} for i in range(20)]}]}
+    monkeypatch.setattr('courses.views.gemini_service.generate_course', lambda *a: big)
+    lock, state = threading.Lock(), {'now': 0, 'peak': 0}
+
+    def slow(term):
+        with lock:
+            state['now'] += 1
+            state['peak'] = max(state['peak'], state['now'])
+        time.sleep(0.05)
+        with lock:
+            state['now'] -= 1
+        return f'https://www.youtube.com/watch?v={term.replace(" ", "")}'
+    monkeypatch.setattr('courses.views.youtube_service.search_video', slow)
+    r = client.post('/api/courses/create/', PAYLOAD, format='json', **H)
+    assert r.status_code == 201
+    assert 1 < state['peak'] <= views.VIDEO_LOOKUP_WORKERS
