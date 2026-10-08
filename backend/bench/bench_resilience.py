@@ -8,6 +8,7 @@ Run (from backend/): python -m bench.bench_resilience --out ../docs/evidence/<di
 """
 import argparse
 import json
+import logging
 import os
 import random
 import subprocess
@@ -18,6 +19,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.test_settings')
 import django  # noqa: E402
 
 django.setup()
+logging.disable(logging.CRITICAL)
 
 import requests  # noqa: E402
 from django.core.cache import cache  # noqa: E402
@@ -36,7 +38,7 @@ def youtube_trial(n, p, rng):
         attempts['n'] += 1
         resp = mock.Mock()
         if rng.random() < p:
-            resp.raise_for_status.side_effect = requests.exceptions.HTTPError('503')
+            resp.raise_for_status.side_effect = requests.exceptions.HTTPError('503', response=mock.Mock(status_code=503))
             return resp
         resp.raise_for_status.return_value = None
         resp.json.return_value = {'items': [{'id': {'videoId': 'abc'}}]}
