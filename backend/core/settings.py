@@ -90,7 +90,7 @@ REST_FRAMEWORK = {
     'NUM_PROXIES': int(os.getenv('NUM_PROXIES', '0')),
     'DEFAULT_THROTTLE_RATES': {
         'generate_ip': os.getenv('GENERATE_RATE_IP', '10/hour'),
-        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '100/day'),
+        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '20/day')  # Gemini free tier: 20 requests/day/model,
     },
 }
 

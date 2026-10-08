@@ -52,11 +52,20 @@ def main():
     ap.add_argument('--gemini-runs', type=int, default=10)
     ap.add_argument('--yt-cap', type=int, default=60, help='max total YouTube search calls')
     ap.add_argument('--pause', type=float, default=6.0, help='seconds between Gemini calls (rate limits)')
+    ap.add_argument('--synthetic-terms', action='store_true',
+                    help='skip Gemini; time YouTube on realistic made-up lesson search terms')
     ap.add_argument('--out', required=True)
     a = ap.parse_args()
 
     gem = []
     courses = []
+    if a.synthetic_terms:
+        a.gemini_runs = 0
+        lessons = ['introduction', 'core concepts', 'setup', 'hands on example', 'best practices', 'common mistakes',
+                   'advanced techniques', 'project walkthrough', 'debugging', 'testing']
+        for t in TOPICS[:2]:  # 2 courses x 20 distinct terms
+            subs = [{'video_url': f'search:{t[0].lower()} {l} tutorial {k}'} for k in range(2) for l in lessons]
+            courses.append({'modules': [{'subtopics': subs}]})
     for i in range(a.gemini_runs):
         title, desc, cat = TOPICS[i % len(TOPICS)]
         t0 = time.perf_counter()

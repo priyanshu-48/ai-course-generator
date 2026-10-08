@@ -79,6 +79,8 @@ class GeminiService:
                 response = self._call_model(prompt, min(self.attempt_timeout, remaining))
                 return self._parse_response(response.text)
             except (ValueError, TimeoutError, *TRANSIENT_ERRORS) as e:
+                if 'PerDay' in str(e):  # daily quota: retrying only burns more of the quota
+                    raise Exception(f"Failed to generate course: {str(e)}")
                 remaining = self.total_budget - (time.monotonic() - start)
                 if attempt == self.max_attempts or remaining < self.min_retry_window:
                     raise Exception(f"Failed to generate course: {str(e)}")

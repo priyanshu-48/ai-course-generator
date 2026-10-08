@@ -124,3 +124,22 @@ def test_hung_call_times_out_and_respects_budget(monkeypatch, no_backoff):
         gemini_service.generate_course('t', 'd', 'AI')
     assert _t.monotonic() - t0 < 0.4
     assert model.generate_content.call_count == 1
+
+
+def test_daily_quota_error_is_not_retried(monkeypatch, no_backoff):
+    from google.api_core import exceptions as gexc
+    model = MagicMock()
+    model.generate_content.side_effect = gexc.ResourceExhausted(
+        'Quota exceeded ... quota_id: GenerateRequestsPerDayPerProjectPerModel-FreeTier')
+    monkeypatch.setattr(gemini_service, 'model', model)
+    with pytest.raises(Exception, match='PerDay'):
+        gemini_service.generate_course('t', 'd', 'AI')
+    assert model.generate_content.call_count == 1
+
+
+def test_per_minute_rate_limit_is_still_retried(monkeypatch, no_backoff):
+    from google.api_core import exceptions as gexc
+    model = MagicMock()
+    model.generate_content.side_effect = [gexc.ResourceExhausted('PerMinute limit'), MagicMock(text=json.dumps(VALID))]
+    monkeypatch.setattr(gemini_service, 'model', model)
+    assert gemini_service.generate_course('t', 'd', 'AI') == VALID
