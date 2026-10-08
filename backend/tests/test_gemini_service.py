@@ -99,3 +99,28 @@ def test_gives_up_after_max_attempts(monkeypatch, no_backoff):
     with pytest.raises(Exception, match='Failed to generate course'):
         gemini_service.generate_course('t', 'd', 'AI')
     assert model.generate_content.call_count == gemini_service.max_attempts
+
+
+def test_model_name_comes_from_settings(settings):
+    from unittest import mock
+    from utils.gemini_service import GeminiService
+    settings.GEMINI_MODEL = 'some-model-name'
+    with mock.patch('utils.gemini_service.genai') as genai:
+        GeminiService()
+    genai.GenerativeModel.assert_called_once_with('some-model-name')
+
+
+def test_hung_call_times_out_and_respects_budget(monkeypatch, no_backoff):
+    import time as _t
+    model = MagicMock()
+    import threading
+    model.generate_content.side_effect = lambda p: threading.Event().wait(0.5)  # real wait (time.sleep is patched)
+    monkeypatch.setattr(gemini_service, 'model', model)
+    monkeypatch.setattr(gemini_service, 'attempt_timeout', 0.05)
+    monkeypatch.setattr(gemini_service, 'total_budget', 0.1)
+    monkeypatch.setattr(gemini_service, 'min_retry_window', 0.2)  # budget already below this -> no retry
+    t0 = _t.monotonic()
+    with pytest.raises(Exception, match='exceeded'):
+        gemini_service.generate_course('t', 'd', 'AI')
+    assert _t.monotonic() - t0 < 0.4
+    assert model.generate_content.call_count == 1
