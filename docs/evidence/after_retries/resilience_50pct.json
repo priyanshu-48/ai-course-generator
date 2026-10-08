@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "label": "SIMULATED transient failures (seeded RNG); not real API failure rates",
+    "commit": "7d36d4e",
+    "dirty": false,
+    "date": "2026-10-08T23:24:56+0530",
+    "params": {
+      "trials": 2000,
+      "fail_rate": 0.5,
+      "seed": 1234,
+      "out": "../docs/evidence/after_retries/resilience_50pct.json"
+    }
+  },
+  "youtube": {
+    "lookups": 2000,
+    "success_pct": 88.5,
+    "http_attempts_per_lookup": 1.72
+  },
+  "gemini": {
+    "generations": 2000,
+    "success_pct": 88.5,
+    "model_calls_per_generation": 1.72
+  }
+}
