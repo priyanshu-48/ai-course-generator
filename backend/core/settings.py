@@ -86,7 +86,7 @@ REST_FRAMEWORK = {
     'NUM_PROXIES': int(os.getenv('NUM_PROXIES', '0')),
     'DEFAULT_THROTTLE_RATES': {
         'generate_ip': os.getenv('GENERATE_RATE_IP', '10/hour'),
-        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '20/day')  # Gemini free tier: 20 requests/day/model,
+        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '60/day')  # 3 models x 20 requests/day on the Gemini free tier,
     },
 }
 
@@ -132,7 +132,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', '')
 # gemini-2.0-flash-exp (the old hardcoded model) now returns 404; models get retired, so keep this configurable
-GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.5-flash')
+# Free-tier quota (20 requests/day) is per model: when GEMINI_MODEL is exhausted these are tried in order.
+GEMINI_FALLBACK_MODELS = [m.strip() for m in os.getenv('GEMINI_FALLBACK_MODELS', 'gemini-3.8-flash,gemini-3.7-flash').split(',') if m.strip()]
 REDIS_URL = os.getenv('REDIS_URL', 'redis://ai-course-redis:6379/0')
 YOUTUBE_CACHE_TTL = 2592000
 
