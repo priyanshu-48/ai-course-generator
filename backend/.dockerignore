@@ -56,3 +56,12 @@ Dockerfile
 
 
 
+
+# Local tooling / tests (not needed at runtime)
+.venv/
+.pytest_cache/
+.coverage
+tests/
+bench/
+pytest.ini
+requirements-dev.txt

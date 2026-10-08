@@ -1,0 +1,10 @@
+# smoke test of new image (gunicorn), 2026-10-08T23:16:53+05:30
+{"status": "ok"}
+[]
+{"error":"Failed to generate course: Failed to generate course: 400 API key not valid. Please pass a valid API key. [rea
+
+[2026-10-08 17:46:41 +0000] [1] [INFO] Starting gunicorn 21.2.0
+[2026-10-08 17:46:41 +0000] [1] [INFO] Listening at: http://0.0.0.0:8000 (1)
+[2026-10-08 17:46:41 +0000] [11] [INFO] Booting worker with pid: 11
+[2026-10-08 17:46:41 +0000] [12] [INFO] Booting worker with pid: 12
+ls: cannot access 'C:/Program Files/Git/app': No such file or directory
