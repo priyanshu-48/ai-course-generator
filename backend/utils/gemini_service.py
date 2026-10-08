@@ -1,8 +1,13 @@
 import json
 import re
+import hashlib
 import google.generativeai as genai
 from django.conf import settings
+from django.core.cache import cache
+import logging
 
+logger = logging.getLogger(__name__)
+GEMINI_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days
 
 class GeminiService:
     def __init__(self):
@@ -11,12 +16,52 @@ class GeminiService:
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """
+        Normalize input text to reduce cache key fragmentation.
+        Lowercase, trim spaces, collapse multiple spaces, and remove punctuation.
+        """
+        text = text.lower().strip()
+        text = re.sub(r'\s+', ' ', text)          
+        text = re.sub(r'[^\w\s]', '', text)       
+        return text
+
     def generate_course(self, title, description, category):
+        """
+        Generates or retrieves a cached course structure.
+        Cache key is a normalized hash of title + description + category.
+        """
+        normalized_title = self.normalize_text(title)
+        normalized_description = self.normalize_text(description)
+        normalized_category = self.normalize_text(category)
+
+        cache_key_raw = f"{normalized_title}:{normalized_description}:{normalized_category}"
+        cache_key = "gemini:" + hashlib.sha256(cache_key_raw.encode()).hexdigest()
+
+        try:
+            cached_data = cache.get(cache_key)
+        except Exception as e:  # Redis down must not break generation
+            logger.warning(f"Gemini cache get failed: {e}")
+            cached_data = None
+        if cached_data:
+            logger.info(f"Gemini cache hit: {cache_key}")
+            return cached_data
+
+        course_data = self._generate_gemini_course(title, description, category)
+
+        try:
+            cache.set(cache_key, course_data, timeout=GEMINI_CACHE_TTL)
+        except Exception as e:
+            logger.warning(f"Gemini cache set failed: {e}")
+
+        return course_data
+
+    def _generate_gemini_course(self, title, description, category):
         prompt = self._build_course_prompt(title, description, category)
         try:
             response = self.model.generate_content(prompt)
-            course_data = self._parse_response(response.text)
-            return course_data
+            return self._parse_response(response.text)
         except Exception as e:
             raise Exception(f"Failed to generate course: {str(e)}")
 
