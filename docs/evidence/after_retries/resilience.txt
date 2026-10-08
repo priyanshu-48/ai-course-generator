@@ -1,0 +1,2 @@
+youtube {'lookups': 2000, 'success_pct': 99.5, 'http_attempts_per_lookup': 1.22}
+gemini  {'generations': 2000, 'success_pct': 99.5, 'model_calls_per_generation': 1.22}
