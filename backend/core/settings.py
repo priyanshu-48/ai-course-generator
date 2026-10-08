@@ -29,6 +29,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'utils.mongo.MongoConnectionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -66,12 +67,7 @@ DATABASES = {
 
 MONGODB_URI = os.getenv('MONGODB_URI', '')
 
-if MONGODB_URI:
-    try:
-        import mongoengine
-        mongoengine.connect(host=MONGODB_URI)
-    except Exception:
-        pass
+# MongoDB connects lazily on the first /api/ request (utils.mongo), retrying if the cluster is down.
 
 AUTH_USER_MODEL = 'users.User'
 
