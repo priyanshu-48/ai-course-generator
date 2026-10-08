@@ -1,13 +1,17 @@
 import json
 import re
 import hashlib
+import time
 import google.generativeai as genai
 from django.conf import settings
 from django.core.cache import cache
+from google.api_core import exceptions as gexc
 import logging
 
 logger = logging.getLogger(__name__)
 GEMINI_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days
+TRANSIENT_ERRORS = (gexc.ServiceUnavailable, gexc.DeadlineExceeded, gexc.GatewayTimeout,
+                    gexc.InternalServerError, gexc.ResourceExhausted, gexc.TooManyRequests)
 
 class GeminiService:
     def __init__(self):
@@ -15,6 +19,8 @@ class GeminiService:
             raise ValueError("GEMINI_API_KEY is not set in environment variables")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.max_attempts = 3
+        self.backoff = 1.0  # seconds, doubled each retry
 
     @staticmethod
     def normalize_text(text: str) -> str:
@@ -59,11 +65,19 @@ class GeminiService:
 
     def _generate_gemini_course(self, title, description, category):
         prompt = self._build_course_prompt(title, description, category)
-        try:
-            response = self.model.generate_content(prompt)
-            return self._parse_response(response.text)
-        except Exception as e:
-            raise Exception(f"Failed to generate course: {str(e)}")
+        # Retry transient API errors and malformed JSON (LLM output is non-deterministic).
+        # The pinned SDK (0.3.2) has no per-call timeout; gunicorn's worker timeout is the backstop.
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = self.model.generate_content(prompt)
+                return self._parse_response(response.text)
+            except (ValueError, *TRANSIENT_ERRORS) as e:
+                if attempt == self.max_attempts:
+                    raise Exception(f"Failed to generate course: {str(e)}")
+                logger.warning(f"Gemini attempt {attempt} failed ({e}); retrying")
+                time.sleep(self.backoff * 2 ** (attempt - 1))
+            except Exception as e:
+                raise Exception(f"Failed to generate course: {str(e)}")
 
     def _build_course_prompt(self, title, description, category):
         prompt = f"""

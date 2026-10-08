@@ -1,3 +1,4 @@
+import pytest
 import requests
 import responses
 
@@ -58,3 +59,46 @@ def test_no_redis_client_at_all(monkeypatch):
 def test_timeout_falls_back(redis_fake):
     responses.add(responses.GET, URL, body=requests.exceptions.Timeout())
     assert youtube_service.search_video('slow') == 'search:slow'
+
+
+@pytest.fixture(autouse=True)
+def no_backoff_sleep(monkeypatch):
+    monkeypatch.setattr('utils.youtube_service.time.sleep', lambda s: None)
+
+
+@responses.activate
+def test_retries_transient_5xx_then_succeeds(redis_fake):
+    responses.add(responses.GET, URL, status=503)
+    responses.add(responses.GET, URL, status=503)
+    responses.add(responses.GET, URL, json=yt_ok('ok3'), status=200)
+    assert youtube_service.search_video('flaky').endswith('ok3')
+    assert len(responses.calls) == 3
+
+
+@responses.activate
+def test_retries_timeout_then_succeeds(redis_fake):
+    responses.add(responses.GET, URL, body=requests.exceptions.Timeout())
+    responses.add(responses.GET, URL, json=yt_ok('ok2'), status=200)
+    assert youtube_service.search_video('slowish').endswith('ok2')
+    assert len(responses.calls) == 2
+
+
+@responses.activate
+def test_gives_up_after_max_attempts(redis_fake):
+    responses.add(responses.GET, URL, status=503)
+    assert youtube_service.search_video('down') == 'search:down'
+    assert len(responses.calls) == youtube_service.max_attempts
+
+
+@responses.activate
+def test_quota_error_403_is_not_retried(redis_fake):
+    responses.add(responses.GET, URL, status=403)
+    assert youtube_service.search_video('quota') == 'search:quota'
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_request_has_timeout(redis_fake):
+    responses.add(responses.GET, URL, json=yt_ok(), status=200)
+    youtube_service.search_video('t')
+    assert responses.calls[0].request.req_kwargs['timeout'] == youtube_service.timeout
