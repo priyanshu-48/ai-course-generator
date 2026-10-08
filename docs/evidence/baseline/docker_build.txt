@@ -1,0 +1,8 @@
+# Docker baseline: 3x 'docker build --no-cache -t acg-baseline backend'
+date: 2026-10-08T11:38:26+05:30
+commit: 94d919a (baseline-benchmark tag will point at the commit containing these fixes; Dockerfile unchanged from HEAD)
+run1 exit=0 build_seconds=116
+run2 exit=0 build_seconds=120
+run3 exit=0 build_seconds=196
+inspect_Size_bytes: 286929913
+docker_images_SIZE: 1.31GB  (disk usage incl. layers; Docker 28 containerd store)
