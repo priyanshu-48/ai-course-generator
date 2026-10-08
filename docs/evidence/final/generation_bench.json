@@ -1,0 +1,82 @@
+{
+  "meta": {
+    "label": "SIMULATED external APIs (Gemini/YouTube mocked, mongomock DB); not real end-to-end latency",
+    "commit": "f0254df",
+    "dirty": false,
+    "date": "2026-10-09T00:19:56+0530",
+    "python": "3.12.9",
+    "params": {
+      "runs": 30,
+      "warmup": 2,
+      "modules": 7,
+      "subtopics": 4,
+      "gemini_latency": 3.0,
+      "youtube_latency": 0.15,
+      "out": "../docs/evidence/final/generation_bench.json"
+    },
+    "subtopics_per_course": 28,
+    "command": "python -m bench.bench_generation --runs 30 --warmup 2 --modules 7 --subtopics 4 --gemini-latency 3.0 --youtube-latency 0.15 --out ../docs/evidence/final/generation_bench.json"
+  },
+  "results": [
+    {
+      "scenario": "no_cache",
+      "youtube_cache": "off",
+      "gemini_cache": "off",
+      "runs": 30,
+      "p50_s": 3.6103,
+      "p95_s": 3.6132,
+      "mean_s": 3.6103,
+      "min_s": 3.6078,
+      "max_s": 3.6141,
+      "youtube_calls_per_course_mean": 28.0,
+      "youtube_lookups_avoided_pct": 0.0,
+      "peak_concurrent_youtube_calls": 8,
+      "gemini_calls_total": 32
+    },
+    {
+      "scenario": "youtube_cache_cold",
+      "youtube_cache": "cold",
+      "gemini_cache": "off",
+      "runs": 30,
+      "p50_s": 3.6129,
+      "p95_s": 3.6186,
+      "mean_s": 3.6145,
+      "min_s": 3.6092,
+      "max_s": 3.6528,
+      "youtube_calls_per_course_mean": 28.0,
+      "youtube_lookups_avoided_pct": 0.0,
+      "peak_concurrent_youtube_calls": 8,
+      "gemini_calls_total": 32
+    },
+    {
+      "scenario": "youtube_cache_warm",
+      "youtube_cache": "warm",
+      "gemini_cache": "off",
+      "runs": 30,
+      "p50_s": 3.0091,
+      "p95_s": 3.0137,
+      "mean_s": 3.0099,
+      "min_s": 3.0064,
+      "max_s": 3.015,
+      "youtube_calls_per_course_mean": 0.0,
+      "youtube_lookups_avoided_pct": 100.0,
+      "peak_concurrent_youtube_calls": 0,
+      "gemini_calls_total": 32
+    },
+    {
+      "scenario": "all_caches_warm",
+      "youtube_cache": "warm",
+      "gemini_cache": "warm",
+      "runs": 30,
+      "p50_s": 0.0093,
+      "p95_s": 0.0129,
+      "mean_s": 0.0095,
+      "min_s": 0.005,
+      "max_s": 0.0157,
+      "youtube_calls_per_course_mean": 0.0,
+      "youtube_lookups_avoided_pct": 100.0,
+      "peak_concurrent_youtube_calls": 0,
+      "gemini_calls_total": 1
+    }
+  ]
+}
