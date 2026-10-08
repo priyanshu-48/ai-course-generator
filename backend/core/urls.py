@@ -13,6 +13,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/courses/', include('courses.urls')),
     path("ping/", views.ping, name="ping"),
+    path("health/", views.health, name="health"),
 ]
 
 if settings.DEBUG:

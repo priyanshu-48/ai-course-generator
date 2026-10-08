@@ -35,6 +35,9 @@ React (Vite, Tailwind)  ──HTTP/JSON──▶  Django REST Framework (Gunicor
    using the Redis cache (30 days) and retries with backoff (`utils/youtube_service.py`).
 4. The course is saved to MongoDB and returned.
 
+**Health.** `/ping/` is dependency-free (used to wake the free-tier host). `/health/` pings MongoDB and returns 503 if it is down.
+MongoDB connects lazily on the first `/api/` request and retries every 5 s, so a paused Atlas cluster no longer needs a restart.
+
 **Retrieve / progress** (`GET /api/courses/`, `GET /api/courses/<id>/`, `POST .../toggle/`, `POST .../progress/`)
 read and update the course document; completion percentage is computed from the lessons marked done.
 
