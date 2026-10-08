@@ -1,0 +1,5 @@
+# smoke test of baseline image (fake API keys), 2026-10-08T11:46:49+05:30
+{"status": "ok"}
+[]
+{"error":"Failed to generate course: Failed to generate course: 400 API key not valid. Please pass a valid API key. [reason: \"API_KEY_INVALID\"\ndomain: \"googleapis.com\"\nmetadata {\n  key: \"service\"\n  value: \"generativelanguage.googleapis.com\"\n}\n, locale: \"en-US\"\nmessage: \"API key not valid. Please pass a valid API key.\"\n]"}
+Internal Server Error: /api/courses/create/
