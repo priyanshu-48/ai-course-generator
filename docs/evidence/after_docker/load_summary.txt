@@ -1,0 +1,9 @@
+# k6 load: GET /ping/ + GET /api/courses/ (empty list, real Mongo 7 + Redis containers), 20s per level, same machine.
+# runserver = baseline image (acg-baseline), gunicorn = new image (3 workers x 4 threads). Date: 2026-10-08.
+# Raw k6 summaries: k6_<server>_vus<N>.json in this folder. Script: backend/bench/k6_read.js
+runserver  vus= 1 rps=22 p50=44.0ms p95=47.9ms failed=0.000
+runserver  vus=10 rps=223 p50=43.9ms p95=48.1ms failed=0.000
+runserver  vus=50 rps=573 p50=79.9ms p95=115.8ms failed=0.000
+gunicorn   vus= 1 rps=826 p50=1.2ms p95=1.8ms failed=0.000
+gunicorn   vus=10 rps=3327 p50=2.8ms p95=5.3ms failed=0.000
+gunicorn   vus=50 rps=3382 p50=13.4ms p95=21.5ms failed=0.000
