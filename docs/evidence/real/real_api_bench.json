@@ -1,0 +1,84 @@
+{
+  "meta": {
+    "label": "REAL Gemini + YouTube APIs; no MongoDB/Redis; unique topics, caches bypassed",
+    "commit": "abaa134",
+    "date": "2026-10-09T00:37:21+0530",
+    "model": "gemini-3.8-flash",
+    "params": {
+      "gemini_runs": 10,
+      "yt_cap": 60,
+      "pause": 6.0,
+      "out": "../docs/evidence/real/real_api_bench.json"
+    }
+  },
+  "gemini": {
+    "runs": [
+      {
+        "topic": "Introduction to Docker",
+        "ok": false,
+        "seconds": 90.001,
+        "error": "Failed to generate course: Gemini call exceeded 29s"
+      },
+      {
+        "topic": "Python Data Analysis with Pandas",
+        "ok": false,
+        "seconds": 67.368,
+        "error": "Failed to generate course: Timeout of 60.0s exceeded, last exception: 503 This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+      },
+      {
+        "topic": "React Fundamentals",
+        "ok": false,
+        "seconds": 63.831,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Machine Learning Basics",
+        "ok": false,
+        "seconds": 4.624,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Git and GitHub Essentials",
+        "ok": false,
+        "seconds": 4.694,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Intro to Cybersecurity",
+        "ok": false,
+        "seconds": 4.656,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "SQL for Beginners",
+        "ok": false,
+        "seconds": 4.559,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Kubernetes Basics",
+        "ok": false,
+        "seconds": 4.58,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Android App Development",
+        "ok": false,
+        "seconds": 4.484,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      },
+      {
+        "topic": "Unity Game Development",
+        "ok": false,
+        "seconds": 4.539,
+        "error": "Failed to generate course: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limi"
+      }
+    ],
+    "success": 0,
+    "attempted": 10,
+    "seconds": null
+  },
+  "youtube": {
+    "cap": 60
+  }
+}
