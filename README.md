@@ -30,7 +30,9 @@ React (Vite, Tailwind)  ──HTTP/JSON──▶  Django REST Framework (Gunicor
 **Generate a course** (`POST /api/courses/create/`, `courses/views.py`)
 1. Throttle check (per client IP and global; fails open if Redis is down).
 2. `gemini_service.generate_course` → Redis cache by normalised title/description/category (7 days);
-   on a miss, one Gemini call with a hard time budget and retries on transient errors or malformed JSON.
+   on a miss, one Gemini call with a hard 90 s budget, retries on transient errors or malformed JSON, and fallback to
+   the next configured model when a model is over its daily quota. If every model is out of quota the API returns 503
+   with a clear message.
 3. `resolve_videos` looks up each distinct `search:<term>` on YouTube **concurrently** (8 workers),
    using the Redis cache (30 days) and retries with backoff (`utils/youtube_service.py`).
 4. The course is saved to MongoDB and returned.
@@ -92,13 +94,14 @@ python manage.py runserver
 | Variable | Purpose | Default |
 |---|---|---|
 | `GEMINI_API_KEY`, `YOUTUBE_API_KEY` | API credentials (never commit) | – |
-| `GEMINI_MODEL` | Gemini model name (models get retired; change here) | `gemini-3.8-flash` |
+| `GEMINI_MODEL` | Primary Gemini model (models get retired; change here) | `gemini-3.5-flash` |
+| `GEMINI_FALLBACK_MODELS` | Comma-separated models tried when the primary hits its daily quota or stays overloaded (free-tier quota is per model) | `gemini-3.8-flash,gemini-3.7-flash` |
 | `MONGODB_URI` | MongoDB connection string | compose: local `mongo` service |
 | `REDIS_URL` | Redis for caches and throttle counters (optional; app works without it) | `redis://…:6379/0` |
 | `SECRET_KEY` | Django secret | insecure dev value; **set in production** |
 | `DEBUG` | `True` enables `/admin/` and tracebacks | `False` |
 | `NUM_PROXIES` | Reverse proxies in front of the app (Render: `1`) so throttling sees real client IPs | `0` |
-| `GENERATE_RATE_IP`, `GENERATE_RATE_GLOBAL` | Generation limits | `10/hour`, `20/day` |
+| `GENERATE_RATE_IP`, `GENERATE_RATE_GLOBAL` | Generation limits | `10/hour`, `60/day` |
 | `FRONTEND_URL` | CORS origin | `http://localhost:5173` |
 
 **Quota warning.** One uncached course costs ~25–30 YouTube searches at 100 quota units each, so the default
