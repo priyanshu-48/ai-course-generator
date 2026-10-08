@@ -9,7 +9,7 @@ const Dashboard = () => {
   const [backendAwake, setBackendAwake] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { updateUser } = useAuth();
 
   useEffect(() => {
     const wakeBackend = async () => {

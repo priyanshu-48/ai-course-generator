@@ -1,0 +1,25 @@
+stderr | src/components/ProtectedRoute.test.jsx > redirects anonymous users to /login
+ ✓ src/utils/api.test.js (2 tests) 7ms
+ ✓ src/context/AuthContext.test.jsx (7 tests) 51ms
+ ✓ src/components/ProtectedRoute.test.jsx (3 tests) 33ms
+stderr | src/pages/AddCourse.test.jsx > submits the form and navigates to the new course
+stderr | src/pages/CoursePage.test.jsx > loads and renders the course with an embedded video
+ ✓ src/pages/CoursePage.test.jsx (4 tests) 366ms
+ ✓ src/pages/AddCourse.test.jsx (3 tests) 2356ms
+ Test Files  5 passed (5)
+      Tests  19 passed (19)
+All files          |   37.61 |    70.32 |   42.85 |   37.61 |                   
+  App.jsx          |       0 |        0 |       0 |       0 | 1-34              
+  ...ctedRoute.jsx |     100 |      100 |     100 |     100 |                   
+  Sidebar.jsx      |       0 |        0 |       0 |       0 | 1-114             
+  AuthContext.jsx  |   88.88 |       75 |   85.71 |   88.88 | 60-67,81,94-96    
+  ...VisitPopup.js |       0 |        0 |       0 |       0 | 1-17              
+  AddCourse.jsx    |   96.73 |       75 |      75 |   96.73 | 48-52,57          
+  CoursePage.jsx   |    95.6 |    82.05 |   77.77 |    95.6 | ...,82-85,282-284 
+  Dashboard.jsx    |       0 |        0 |       0 |       0 | 1-265             
+  Explore.jsx      |       0 |        0 |       0 |       0 | 1-82              
+  Landing.jsx      |       0 |        0 |       0 |       0 | 1-126             
+  Login.jsx        |       0 |        0 |       0 |       0 | 1-122             
+  Register.jsx     |       0 |        0 |       0 |       0 | 1-172             
+  Upgrade.jsx      |       0 |        0 |       0 |       0 | 1-189             
+  api.js           |   90.69 |    57.14 |    8.33 |   90.69 | 56-61,63-64       

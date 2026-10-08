@@ -8,7 +8,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-change-this-in-production')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'  # opt in to debug; exposes /admin/ and tracebacks
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -20,6 +20,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'users',
     'courses',
@@ -85,6 +86,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
+    # Number of reverse proxies in front of the app (Render = 1). 0 ignores X-Forwarded-For (unspoofable).
+    'NUM_PROXIES': int(os.getenv('NUM_PROXIES', '0')),
+    'DEFAULT_THROTTLE_RATES': {
+        'generate_ip': os.getenv('GENERATE_RATE_IP', '10/hour'),
+        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '20/day')  # Gemini free tier: 20 requests/day/model,
+    },
 }
 
 SIMPLE_JWT = {
@@ -128,5 +135,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', '')
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+# gemini-2.0-flash-exp (the old hardcoded model) now returns 404; models get retired, so keep this configurable
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
+REDIS_URL = os.getenv('REDIS_URL', 'redis://ai-course-redis:6379/0')
 YOUTUBE_CACHE_TTL = 2592000
+
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": REDIS_URL,
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # fail fast when Redis is unreachable (callers fail open)
+            "SOCKET_CONNECT_TIMEOUT": 2,
+            "SOCKET_TIMEOUT": 2,
+        }
+    }
+}
+

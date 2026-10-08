@@ -1,0 +1,44 @@
+{
+  "meta": {
+    "label": "REAL Gemini + YouTube APIs; no MongoDB/Redis; unique topics, caches bypassed",
+    "commit": "a19371b",
+    "date": "2026-10-09T00:38:45+0530",
+    "model": "gemini-3.8-flash",
+    "params": {
+      "gemini_runs": 0,
+      "yt_cap": 40,
+      "pause": 6.0,
+      "synthetic_terms": true,
+      "out": "../docs/evidence/real/youtube_real.json"
+    }
+  },
+  "gemini": {
+    "runs": [],
+    "success": 0,
+    "attempted": 0,
+    "seconds": null
+  },
+  "youtube": {
+    "cap": 40,
+    "sequential": {
+      "calls": 20,
+      "wall_seconds": 16.518,
+      "unresolved": 0,
+      "per_call_seconds": {
+        "n": 20,
+        "mean": 0.826,
+        "p50": 0.816,
+        "p95": 0.9,
+        "min": 0.693,
+        "max": 0.964,
+        "stdev": 0.062
+      }
+    },
+    "concurrent": {
+      "calls": 20,
+      "workers": 8,
+      "wall_seconds": 3.145,
+      "unresolved": 0
+    }
+  }
+}

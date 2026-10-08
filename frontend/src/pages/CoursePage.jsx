@@ -14,6 +14,7 @@ const CoursePage = () => {
 
   useEffect(() => {
     loadCourse();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadCourse = async () => {
@@ -212,7 +213,7 @@ const CoursePage = () => {
                       </svg>
                       <h3 className="text-xl font-semibold mb-2">Find Video on YouTube</h3>
                       <p className="text-center mb-4 text-primary-100">
-                        Search for: "{currentSubtopic.video_url.replace('search:', '')}"
+                        Search for: &quot;{currentSubtopic.video_url.replace('search:', '')}&quot;
                       </p>
                       <a
                         href={getVideoEmbedUrl(currentSubtopic.video_url)}

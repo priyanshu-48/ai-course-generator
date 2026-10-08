@@ -1,0 +1,7 @@
+# smoke test of final image, 2026-10-09T00:20:36+05:30
+{"status": "ok"}
+admin (DEBUG off) -> 404
+register -> {"user":{"id":1,"email":"s@x.com","name"
+logout -> 200
+refresh after logout -> 401
+400 400 400 400 400 400 400 400 400 400 429 429 <- create x12 (limit 10/hour per IP)

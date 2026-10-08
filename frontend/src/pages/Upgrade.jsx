@@ -71,7 +71,7 @@ const Upgrade = () => {
               <div>
                 <h3 className="font-semibold text-gray-900 mb-1">Current Plan: {user?.plan || 'Free'}</h3>
                 <p className="text-sm text-gray-600">
-                  You've created {user?.courses_created || 0} of {user?.course_limit || 3} courses
+                  You&apos;ve created {user?.courses_created || 0} of {user?.course_limit || 3} courses
                 </p>
               </div>
               <div className="text-right">
@@ -166,7 +166,7 @@ const Upgrade = () => {
                   What happens to my courses if I downgrade?
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  Your existing courses will remain accessible. You'll only be limited in creating
+                  Your existing courses will remain accessible. You&apos;ll only be limited in creating
                   new courses based on your plan.
                 </p>
               </div>
