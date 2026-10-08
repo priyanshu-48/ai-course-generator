@@ -1,0 +1,4 @@
+no_cache               p50=3.619s p95=3.627s yt_calls/course=28.0 avoided=0.0% peak_inflight=8 gemini_calls=32
+youtube_cache_cold     p50=3.611s p95=3.612s yt_calls/course=28.0 avoided=0.0% peak_inflight=8 gemini_calls=32
+youtube_cache_warm     p50=3.007s p95=3.010s yt_calls/course=0.0 avoided=100.0% peak_inflight=0 gemini_calls=32
+all_caches_warm        p50=0.006s p95=0.007s yt_calls/course=0.0 avoided=100.0% peak_inflight=0 gemini_calls=1
