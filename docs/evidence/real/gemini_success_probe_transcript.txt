@@ -1,0 +1,8 @@
+# TRANSCRIBED from the console (the original probe.json was overwritten by later probe runs and not kept).
+# Treat as a single anecdotal data point (n=1), not a benchmark.
+# command: GEMINI_MODEL=gemini-3.8-flash python -m bench.bench_real --gemini-runs 1 --yt-cap 0 --out ../docs/evidence/real/probe.json
+# date: 2026-10-09, commit 8e8698a+ (pre-time-budget code)
+gemini 1/1: {'topic': 'Introduction to Docker', 'ok': True, 'seconds': 50.811, 'modules': 7, 'subtopics': 25}
+# Same day, other probes (also console only): gemini-2.0-flash-exp -> 404 not found; gemini-2.5-flash -> 404 "no longer available to new users";
+# gemini-flash-latest -> 503 high demand / 504 deadline exceeded (72.8s and 182.5s); trivial prompt 'ok' on gemini-3.8-flash/3.7-flash ~8.2s.
+# Free-tier limit seen afterwards: 20 requests/day/model (429 GenerateRequestsPerDayPerProjectPerModel-FreeTier), resets in ~5h.
