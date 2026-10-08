@@ -1,5 +1,7 @@
-import requests
 import logging
+import time
+
+import requests
 from django.conf import settings
 from .redis_client import redis_client
 
@@ -11,6 +13,9 @@ class YouTubeService:
         self.base_url = "https://www.googleapis.com/youtube/v3/search"
         self.cache_ttl = settings.YOUTUBE_CACHE_TTL
         self.cache_prefix = "youtube:"
+        self.timeout = 8
+        self.max_attempts = 3
+        self.backoff = 0.5  # seconds, doubled each retry
 
     def search_video(self, search_term, max_results=1):
         if not self.api_key:
@@ -43,9 +48,7 @@ class YouTubeService:
                 'order': 'relevance'
             }
 
-            response = requests.get(self.base_url, params=params, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            data = self._fetch(params)
 
             if 'items' in data and len(data['items']) > 0:
                 video_id = data['items'][0]['id']['videoId']
@@ -69,6 +72,22 @@ class YouTubeService:
         except Exception as e:
             logger.error(f"Error searching YouTube: {e}")
             return f"search:{search_term}"
+
+
+    def _fetch(self, params):
+        """GET with timeout; retry timeouts, connection errors and 429/5xx with exponential backoff."""
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = requests.get(self.base_url, params=params, timeout=self.timeout)
+                response.raise_for_status()
+                return response.json()
+            except requests.exceptions.RequestException as e:
+                status = getattr(getattr(e, 'response', None), 'status_code', None)
+                transient = status is None or status == 429 or status >= 500
+                if not transient or attempt == self.max_attempts:
+                    raise
+                logger.warning(f"YouTube attempt {attempt} failed ({e}); retrying")
+                time.sleep(self.backoff * 2 ** (attempt - 1))
 
 
 youtube_service = YouTubeService()

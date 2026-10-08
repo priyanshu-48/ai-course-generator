@@ -1,3 +1,7 @@
+import copy
+import logging
+from concurrent.futures import ThreadPoolExecutor
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -12,7 +16,29 @@ from .serializers import (
     SubtopicSerializer
 )
 from utils.gemini_service import gemini_service
+from utils.throttling import GenerateGlobalThrottle, GenerateIPThrottle
 from utils.youtube_service import youtube_service
+
+logger = logging.getLogger(__name__)
+
+VIDEO_LOOKUP_WORKERS = 8
+
+
+def resolve_videos(course_data):
+    """Resolve every 'search:<term>' video_url in place, one lookup per distinct term, concurrently."""
+    terms = {
+        sub['video_url'][len('search:'):].strip()
+        for module in course_data['modules'] for sub in module['subtopics']
+        if sub['video_url'].startswith('search:')
+    }
+    if not terms:
+        return
+    with ThreadPoolExecutor(max_workers=VIDEO_LOOKUP_WORKERS) as pool:
+        resolved = dict(zip(terms, pool.map(youtube_service.search_video, terms)))
+    for module in course_data['modules']:
+        for sub in module['subtopics']:
+            if sub['video_url'].startswith('search:'):
+                sub['video_url'] = resolved[sub['video_url'][len('search:'):].strip()]
 
 
 def get_demo_user_id(request):
@@ -58,6 +84,7 @@ class CourseDetailView(APIView):
 
 class CourseCreateView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [GenerateIPThrottle, GenerateGlobalThrottle]  # protects Gemini/YouTube free-tier quotas
 
     def post(self, request):
         demo_id = get_demo_user_id(request)
@@ -70,21 +97,16 @@ class CourseCreateView(APIView):
         thumbnail = serializer.validated_data.get('thumbnail', '')
 
         try:
-            course_data = gemini_service.generate_course(title, description, category)
+            course_data = copy.deepcopy(gemini_service.generate_course(title, description, category))
+            resolve_videos(course_data)
             modules = []
 
             for module_index, module_data in enumerate(course_data['modules']):
                 subtopics = []
                 for subtopic_index, subtopic_data in enumerate(module_data['subtopics']):
-                    video_url = subtopic_data['video_url']
-                    if video_url.startswith('search:'):
-                        search_term = video_url.replace('search:', '').strip()
-                        video_url = youtube_service.search_video(search_term)
-                        print(f"Video found for '{search_term}': {video_url}")
-
                     subtopic = Subtopic(
                         title=subtopic_data['title'],
-                        video_url=video_url,
+                        video_url=subtopic_data['video_url'],
                         content=subtopic_data['content'],
                         order=subtopic_index,
                         completed=False
@@ -113,9 +135,10 @@ class CourseCreateView(APIView):
                 status=status.HTTP_201_CREATED
             )
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Course generation failed")
             return Response(
-                {'error': f'Failed to generate course: {str(e)}'},
+                {'error': 'Failed to generate course. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 

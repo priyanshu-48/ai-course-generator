@@ -1,0 +1,8 @@
+# docker build measurement: ref=HEAD (27589da) date=2026-10-08T23:17:05+05:30
+# cmd: docker build --no-cache -t acg-measure backend   (clean worktree checkout)
+run1 exit=0 build_seconds=43
+run2 exit=0 build_seconds=46
+run3 exit=0 build_seconds=52
+inspect_Size_bytes: 80793568
+docker_images_SIZE: 375MB
+app_dir_contents: .env.example core courses manage.py requirements.txt users utils 

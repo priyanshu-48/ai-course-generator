@@ -1,24 +1,104 @@
 import json
 import re
+import hashlib
+import time
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 import google.generativeai as genai
 from django.conf import settings
+from django.core.cache import cache
+from google.api_core import exceptions as gexc
+import logging
 
+logger = logging.getLogger(__name__)
+GEMINI_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days
+TRANSIENT_ERRORS = (gexc.ServiceUnavailable, gexc.DeadlineExceeded, gexc.GatewayTimeout,
+                    gexc.InternalServerError, gexc.ResourceExhausted, gexc.TooManyRequests)
 
 class GeminiService:
     def __init__(self):
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is not set in environment variables")
         genai.configure(api_key=settings.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-2.0-flash-exp')
+        self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        self.max_attempts = 3
+        self.backoff = 1.0  # seconds, doubled each retry
+        # Real generations take ~50s. The whole call must finish inside gunicorn's 120s worker
+        # timeout (including YouTube lookups), so attempts share a hard budget.
+        self.attempt_timeout = 80
+        self.total_budget = 90
+        self.min_retry_window = 10  # don't start another attempt with less than this left
+
+    @staticmethod
+    def normalize_text(text: str) -> str:
+        """
+        Normalize input text to reduce cache key fragmentation.
+        Lowercase, trim spaces, collapse multiple spaces, and remove punctuation.
+        """
+        text = text.lower().strip()
+        text = re.sub(r'\s+', ' ', text)          
+        text = re.sub(r'[^\w\s]', '', text)       
+        return text
 
     def generate_course(self, title, description, category):
-        prompt = self._build_course_prompt(title, description, category)
+        """
+        Generates or retrieves a cached course structure.
+        Cache key is a normalized hash of title + description + category.
+        """
+        normalized_title = self.normalize_text(title)
+        normalized_description = self.normalize_text(description)
+        normalized_category = self.normalize_text(category)
+
+        cache_key_raw = f"{normalized_title}:{normalized_description}:{normalized_category}"
+        cache_key = "gemini:" + hashlib.sha256(cache_key_raw.encode()).hexdigest()
+
         try:
-            response = self.model.generate_content(prompt)
-            course_data = self._parse_response(response.text)
-            return course_data
+            cached_data = cache.get(cache_key)
+        except Exception as e:  # Redis down must not break generation
+            logger.warning(f"Gemini cache get failed: {e}")
+            cached_data = None
+        if cached_data:
+            logger.info(f"Gemini cache hit: {cache_key}")
+            return cached_data
+
+        course_data = self._generate_gemini_course(title, description, category)
+
+        try:
+            cache.set(cache_key, course_data, timeout=GEMINI_CACHE_TTL)
         except Exception as e:
-            raise Exception(f"Failed to generate course: {str(e)}")
+            logger.warning(f"Gemini cache set failed: {e}")
+
+        return course_data
+
+    def _generate_gemini_course(self, title, description, category):
+        prompt = self._build_course_prompt(title, description, category)
+        # Retry transient API errors, timeouts and malformed JSON (LLM output is non-deterministic).
+        start = time.monotonic()
+        for attempt in range(1, self.max_attempts + 1):
+            remaining = self.total_budget - (time.monotonic() - start)
+            try:
+                response = self._call_model(prompt, min(self.attempt_timeout, remaining))
+                return self._parse_response(response.text)
+            except (ValueError, TimeoutError, *TRANSIENT_ERRORS) as e:
+                if 'PerDay' in str(e):  # daily quota: retrying only burns more of the quota
+                    raise Exception(f"Failed to generate course: {str(e)}")
+                remaining = self.total_budget - (time.monotonic() - start)
+                if attempt == self.max_attempts or remaining < self.min_retry_window:
+                    raise Exception(f"Failed to generate course: {str(e)}")
+                logger.warning(f"Gemini attempt {attempt} failed ({e}); retrying")
+                time.sleep(self.backoff * 2 ** (attempt - 1))
+            except Exception as e:
+                raise Exception(f"Failed to generate course: {str(e)}")
+
+    def _call_model(self, prompt, timeout):
+        """generate_content with a hard deadline (SDK 0.3.2 offers no per-call timeout)."""
+        pool = ThreadPoolExecutor(max_workers=1)
+        future = pool.submit(self.model.generate_content, prompt)
+        try:
+            return future.result(timeout=timeout)
+        except FutureTimeout:
+            raise TimeoutError(f"Gemini call exceeded {timeout:.0f}s")
+        finally:
+            pool.shutdown(wait=False)
 
     def _build_course_prompt(self, title, description, category):
         prompt = f"""
