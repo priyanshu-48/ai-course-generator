@@ -48,6 +48,7 @@ def test_create_gemini_failure_returns_500(client, monkeypatch):
     monkeypatch.setattr('courses.views.gemini_service.generate_course', boom)
     r = client.post('/api/courses/create/', PAYLOAD, format='json', **H)
     assert r.status_code == 500 and 'Failed to generate' in r.data['error']
+    assert 'bad json' not in r.data['error']  # internal detail is logged, not returned
     assert Course.objects.count() == 0
 
 

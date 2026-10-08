@@ -1,4 +1,5 @@
 import copy
+import logging
 from concurrent.futures import ThreadPoolExecutor
 
 from rest_framework import status
@@ -17,6 +18,7 @@ from .serializers import (
 from utils.gemini_service import gemini_service
 from utils.youtube_service import youtube_service
 
+logger = logging.getLogger(__name__)
 
 VIDEO_LOOKUP_WORKERS = 8
 
@@ -131,9 +133,10 @@ class CourseCreateView(APIView):
                 status=status.HTTP_201_CREATED
             )
 
-        except Exception as e:
+        except Exception:
+            logger.exception("Course generation failed")
             return Response(
-                {'error': f'Failed to generate course: {str(e)}'},
+                {'error': 'Failed to generate course. Please try again.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
