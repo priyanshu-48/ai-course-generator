@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 from django.core.cache import cache
 
-from utils.gemini_service import gemini_service
+from utils.gemini_service import AIQuotaExceeded, gemini_service
 
 VALID = {'modules': [{'title': 'M', 'subtopics': [{'title': 's', 'video_url': 'search:q', 'content': 'c'}]}]}
 
@@ -101,13 +101,16 @@ def test_gives_up_after_max_attempts(monkeypatch, no_backoff):
     assert model.generate_content.call_count == gemini_service.max_attempts
 
 
-def test_model_name_comes_from_settings(settings):
+def test_model_names_come_from_settings(settings):
     from unittest import mock
     from utils.gemini_service import GeminiService
     settings.GEMINI_MODEL = 'some-model-name'
+    settings.GEMINI_FALLBACK_MODELS = ['fb-1', 'some-model-name', 'fb-2']
     with mock.patch('utils.gemini_service.genai') as genai:
-        GeminiService()
-    genai.GenerativeModel.assert_called_once_with('some-model-name')
+        svc = GeminiService()
+    names = [c.args[0] for c in genai.GenerativeModel.call_args_list]
+    assert names == ['some-model-name', 'fb-1', 'fb-2']  # no duplicate of the primary
+    assert [n for n, _ in svc.fallbacks] == ['fb-1', 'fb-2']
 
 
 def test_hung_call_times_out_and_respects_budget(monkeypatch, no_backoff):
@@ -132,7 +135,7 @@ def test_daily_quota_error_is_not_retried(monkeypatch, no_backoff):
     model.generate_content.side_effect = gexc.ResourceExhausted(
         'Quota exceeded ... quota_id: GenerateRequestsPerDayPerProjectPerModel-FreeTier')
     monkeypatch.setattr(gemini_service, 'model', model)
-    with pytest.raises(Exception, match='PerDay'):
+    with pytest.raises(AIQuotaExceeded):
         gemini_service.generate_course('t', 'd', 'AI')
     assert model.generate_content.call_count == 1
 
@@ -143,3 +146,68 @@ def test_per_minute_rate_limit_is_still_retried(monkeypatch, no_backoff):
     model.generate_content.side_effect = [gexc.ResourceExhausted('PerMinute limit'), MagicMock(text=json.dumps(VALID))]
     monkeypatch.setattr(gemini_service, 'model', model)
     assert gemini_service.generate_course('t', 'd', 'AI') == VALID
+
+
+def quota_model():
+    from google.api_core import exceptions as gexc
+    m = MagicMock()
+    m.generate_content.side_effect = gexc.ResourceExhausted('... GenerateRequestsPerDayPerProjectPerModel-FreeTier')
+    return m
+
+
+def test_falls_back_to_next_model_when_daily_quota_exhausted(monkeypatch, no_backoff):
+    primary, backup = quota_model(), fake_model(json.dumps(VALID))
+    monkeypatch.setattr(gemini_service, 'model', primary)
+    monkeypatch.setattr(gemini_service, 'fallbacks', [('backup', backup)])
+    assert gemini_service.generate_course('a', 'd', 'AI') == VALID
+    assert primary.generate_content.call_count == 1 and backup.generate_content.call_count == 1
+    # the exhausted model is skipped on the next (uncached) request
+    assert gemini_service.generate_course('b', 'd', 'AI') == VALID
+    assert primary.generate_content.call_count == 1 and backup.generate_content.call_count == 2
+
+
+def test_all_models_exhausted_raises_and_then_makes_no_calls(monkeypatch, no_backoff):
+    p, b = quota_model(), quota_model()
+    monkeypatch.setattr(gemini_service, 'model', p)
+    monkeypatch.setattr(gemini_service, 'fallbacks', [('backup', b)])
+    with pytest.raises(AIQuotaExceeded):
+        gemini_service.generate_course('a', 'd', 'AI')
+    with pytest.raises(AIQuotaExceeded):
+        gemini_service.generate_course('b', 'd', 'AI')   # inside cooldown: no API calls at all
+    assert p.generate_content.call_count == 1 and b.generate_content.call_count == 1
+
+
+def test_non_quota_failure_does_not_fall_back(monkeypatch, no_backoff):
+    from google.api_core import exceptions as gexc
+    primary, backup = MagicMock(), fake_model(json.dumps(VALID))
+    primary.generate_content.side_effect = gexc.InvalidArgument('bad request')
+    monkeypatch.setattr(gemini_service, 'model', primary)
+    monkeypatch.setattr(gemini_service, 'fallbacks', [('backup', backup)])
+    with pytest.raises(Exception, match='bad request'):
+        gemini_service.generate_course('a', 'd', 'AI')
+    assert backup.generate_content.call_count == 0
+
+
+def test_falls_back_when_primary_stays_overloaded(monkeypatch, no_backoff):
+    from google.api_core import exceptions as gexc
+    primary, backup = MagicMock(), fake_model(json.dumps(VALID))
+    primary.generate_content.side_effect = gexc.ServiceUnavailable('high demand')
+    monkeypatch.setattr(gemini_service, 'model', primary)
+    monkeypatch.setattr(gemini_service, 'fallbacks', [('backup', backup)])
+    assert gemini_service.generate_course('a', 'd', 'AI') == VALID
+    assert primary.generate_content.call_count == gemini_service.max_attempts
+    assert backup.generate_content.call_count == 1
+
+
+def test_no_fallback_when_budget_is_spent(monkeypatch, no_backoff):
+    import threading
+    primary, backup = MagicMock(), fake_model(json.dumps(VALID))
+    primary.generate_content.side_effect = lambda p: threading.Event().wait(0.3)
+    monkeypatch.setattr(gemini_service, 'model', primary)
+    monkeypatch.setattr(gemini_service, 'fallbacks', [('backup', backup)])
+    monkeypatch.setattr(gemini_service, 'attempt_timeout', 0.05)
+    monkeypatch.setattr(gemini_service, 'total_budget', 0.1)
+    monkeypatch.setattr(gemini_service, 'min_retry_window', 0.2)
+    with pytest.raises(Exception, match='exceeded'):
+        gemini_service.generate_course('a', 'd', 'AI')
+    assert backup.generate_content.call_count == 0

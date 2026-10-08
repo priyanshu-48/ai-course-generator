@@ -14,17 +14,31 @@ GEMINI_CACHE_TTL = 60 * 60 * 24 * 7  # 7 days
 TRANSIENT_ERRORS = (gexc.ServiceUnavailable, gexc.DeadlineExceeded, gexc.GatewayTimeout,
                     gexc.InternalServerError, gexc.ResourceExhausted, gexc.TooManyRequests)
 
+class AIQuotaExceeded(Exception):
+    """Every configured Gemini model has hit its daily free-tier quota."""
+
+
+class ModelUnavailable(Exception):
+    """A model kept failing transiently (overloaded, timeouts, malformed output) after its retries."""
+
+
 class GeminiService:
     def __init__(self):
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY is not set in environment variables")
         genai.configure(api_key=settings.GEMINI_API_KEY)
         self.model = genai.GenerativeModel(settings.GEMINI_MODEL)
+        self.model_name = settings.GEMINI_MODEL
+        # The free-tier daily quota is per model, so other models act as fallbacks.
+        self.fallbacks = [(n, genai.GenerativeModel(n)) for n in settings.GEMINI_FALLBACK_MODELS
+                          if n != settings.GEMINI_MODEL]
+        self.exhausted_until = {}   # model name -> time.monotonic() until which we skip it
+        self.exhausted_cooldown = 600  # seconds; avoids spending a call on a model we know is out
         self.max_attempts = 3
         self.backoff = 1.0  # seconds, doubled each retry
         # Real generations take ~50s. The whole call must finish inside gunicorn's 120s worker
         # timeout (including YouTube lookups), so attempts share a hard budget.
-        self.attempt_timeout = 80
+        self.attempt_timeout = 55  # real generations take 22-51s; a hung attempt must leave room for a fallback
         self.total_budget = 90
         self.min_retry_window = 10  # don't start another attempt with less than this left
 
@@ -71,28 +85,47 @@ class GeminiService:
 
     def _generate_gemini_course(self, title, description, category):
         prompt = self._build_course_prompt(title, description, category)
+        start = time.monotonic()  # one budget shared by all models, so the request stays under gunicorn's timeout
+        last_error = None
+        for name, model in [(self.model_name, self.model)] + self.fallbacks:
+            if self.exhausted_until.get(name, 0) > time.monotonic():
+                continue
+            if last_error and self.total_budget - (time.monotonic() - start) < self.min_retry_window:
+                break
+            try:
+                return self._run_model(name, model, prompt, start)
+            except AIQuotaExceeded:
+                logger.warning(f"Gemini model {name} hit its daily quota; trying next model")
+                self.exhausted_until[name] = time.monotonic() + self.exhausted_cooldown
+            except ModelUnavailable as e:
+                logger.warning(f"Gemini model {name} unavailable ({e}); trying next model")
+                last_error = e
+        if last_error:
+            raise Exception(f"Failed to generate course: {last_error}")
+        raise AIQuotaExceeded("All configured Gemini models have reached their daily quota")
+
+    def _run_model(self, name, model, prompt, start):
         # Retry transient API errors, timeouts and malformed JSON (LLM output is non-deterministic).
-        start = time.monotonic()
         for attempt in range(1, self.max_attempts + 1):
             remaining = self.total_budget - (time.monotonic() - start)
             try:
-                response = self._call_model(prompt, min(self.attempt_timeout, remaining))
+                response = self._call_model(model, prompt, min(self.attempt_timeout, remaining))
                 return self._parse_response(response.text)
             except (ValueError, TimeoutError, *TRANSIENT_ERRORS) as e:
                 if 'PerDay' in str(e):  # daily quota: retrying only burns more of the quota
-                    raise Exception(f"Failed to generate course: {str(e)}")
+                    raise AIQuotaExceeded(str(e))
                 remaining = self.total_budget - (time.monotonic() - start)
                 if attempt == self.max_attempts or remaining < self.min_retry_window:
-                    raise Exception(f"Failed to generate course: {str(e)}")
-                logger.warning(f"Gemini attempt {attempt} failed ({e}); retrying")
+                    raise ModelUnavailable(str(e))
+                logger.warning(f"Gemini {name} attempt {attempt} failed ({e}); retrying")
                 time.sleep(self.backoff * 2 ** (attempt - 1))
             except Exception as e:
-                raise Exception(f"Failed to generate course: {str(e)}")
+                raise Exception(f"Failed to generate course: {str(e)}")  # non-transient: do not fall back
 
-    def _call_model(self, prompt, timeout):
+    def _call_model(self, model, prompt, timeout):
         """generate_content with a hard deadline (SDK 0.3.2 offers no per-call timeout)."""
         pool = ThreadPoolExecutor(max_workers=1)
-        future = pool.submit(self.model.generate_content, prompt)
+        future = pool.submit(model.generate_content, prompt)
         try:
             return future.result(timeout=timeout)
         except FutureTimeout:
