@@ -86,7 +86,7 @@ Quote the **50-VU row (~5.9× throughput)**. `runserver`'s ~44 ms floor at one u
 
 | Package | Tests | Coverage (lines) | Evidence |
 |---|---|---|---|
-| Backend (pytest, `courses`+`users`+`utils`) | **53** | **93 %** | `evidence/final/backend_coverage.txt` |
+| Backend (pytest, `courses`+`users`+`utils`) | **63** | **94 %** | `evidence/final/backend_coverage.txt` |
 | Frontend (Vitest) | **19** | **37.6 %** overall; key flows: AddCourse 97 %, CoursePage 96 %, AuthContext 89 %, ProtectedRoute 100 %, api.js 91 % | `evidence/final/frontend_coverage.txt` |
 
 Backend tests mock Gemini/YouTube, use `mongomock` + `fakeredis`; frontend mocks the API module. Index/`explain()` behaviour on real MongoDB is **not** covered by any test.
@@ -96,12 +96,13 @@ Backend tests mock Gemini/YouTube, use `mongomock` + `fakeredis`; frontend mocks
 ## Fixes found along the way (not performance, but material)
 
 - Course generation was broken in the working tree (`AttributeError`: missing `_generate_gemini_course`).
-- The hard-coded Gemini model `gemini-2.0-flash-exp` returns 404 (retired); `gemini-2.5-flash` is closed to new users. Now configurable (`GEMINI_MODEL`, default `gemini-3.8-flash`). **Any deployment built from the old code cannot generate courses until this is applied.**
-- My retries + the SDK's own 60 s internal retry could exceed Gunicorn's 120 s worker timeout (observed a 182 s call). Calls now have a hard 90 s budget.
+- The hard-coded Gemini model `gemini-2.0-flash-exp` returns 404 (retired); `gemini-2.5-flash` is closed to new users. Now configurable (`GEMINI_MODEL`, default `gemini-3.5-flash`). **Any deployment built from the old code cannot generate courses until this is applied.**
+- My retries + the SDK's own 60 s internal retry could exceed Gunicorn's 120 s worker timeout (observed a 182 s call). Calls now share a hard 90 s budget (55 s per attempt), which also keeps requests under Render's ~100 s proxy limit.
 - Daily-quota 429s are no longer retried (it only burns the 20/day quota). The quota is per model, so `GEMINI_FALLBACK_MODELS` are tried in order, and the API returns 503 with a clear message when all are exhausted. Global throttle default: 60/day (3 models × 20).
 - Real check after the fix (console only, not a benchmark): `gemini-3.5-flash` generated a 7-module course in 22.4 s; `gemini-3.7-flash` returned a 500 after ~60 s on the same kind of prompt, so model health varies.
 - Logout returned 400 and rotated refresh tokens stayed valid (blacklist app not installed); fixed with a migration and a frontend change.
 - `DEBUG` defaulted to on; error responses leaked exception text.
+- MongoDB connected once at start-up and swallowed errors, so a paused Atlas cluster left every `/api/` call returning 500 until a manual restart. It now connects lazily and retries; `/health/` reports Mongo status.
 
 ## Limitations
 
