@@ -1,11 +1,12 @@
+# regenerated at commit 6c691e9 on 2026-10-09T01:39:26+05:30: cd frontend && npm run test:coverage
 stderr | src/components/ProtectedRoute.test.jsx > redirects anonymous users to /login
- ✓ src/utils/api.test.js (2 tests) 7ms
- ✓ src/context/AuthContext.test.jsx (7 tests) 51ms
- ✓ src/components/ProtectedRoute.test.jsx (3 tests) 33ms
+ ✓ src/components/ProtectedRoute.test.jsx (3 tests) 34ms
 stderr | src/pages/AddCourse.test.jsx > submits the form and navigates to the new course
+ ✓ src/utils/api.test.js (2 tests) 7ms
+ ✓ src/context/AuthContext.test.jsx (7 tests) 50ms
 stderr | src/pages/CoursePage.test.jsx > loads and renders the course with an embedded video
- ✓ src/pages/CoursePage.test.jsx (4 tests) 366ms
- ✓ src/pages/AddCourse.test.jsx (3 tests) 2356ms
+ ✓ src/pages/CoursePage.test.jsx (4 tests) 299ms
+ ✓ src/pages/AddCourse.test.jsx (3 tests) 2330ms
  Test Files  5 passed (5)
       Tests  19 passed (19)
 All files          |   37.61 |    70.32 |   42.85 |   37.61 |                   
