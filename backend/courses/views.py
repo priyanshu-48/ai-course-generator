@@ -16,6 +16,7 @@ from .serializers import (
     SubtopicSerializer
 )
 from utils.gemini_service import gemini_service
+from utils.throttling import GenerateGlobalThrottle, GenerateIPThrottle
 from utils.youtube_service import youtube_service
 
 logger = logging.getLogger(__name__)
@@ -83,6 +84,7 @@ class CourseDetailView(APIView):
 
 class CourseCreateView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [GenerateIPThrottle, GenerateGlobalThrottle]  # protects Gemini/YouTube free-tier quotas
 
     def post(self, request):
         demo_id = get_demo_user_id(request)

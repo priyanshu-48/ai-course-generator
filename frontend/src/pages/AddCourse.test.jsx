@@ -46,3 +46,12 @@ it('shows the backend error when generation fails', async () => {
   await userEvent.click(screen.getByRole('button', { name: /generate|create/i }));
   expect(await screen.findByText(/failed to generate course: boom/i)).toBeInTheDocument();
 });
+
+it('shows a friendly message when throttled (429)', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => {});
+  coursesAPI.createCourse.mockRejectedValue({ response: { status: 429, data: { detail: 'Request was throttled.' } } });
+  mount();
+  await fill();
+  await userEvent.click(screen.getByRole('button', { name: /generate|create/i }));
+  expect(await screen.findByText(/too many course requests/i)).toBeInTheDocument();
+});

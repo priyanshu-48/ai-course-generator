@@ -15,6 +15,9 @@ import time
 from unittest import mock
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'core.test_settings')
+# the benchmark hammers one endpoint from one IP; disable throttling (a no-op before throttling existed)
+os.environ.setdefault('GENERATE_RATE_IP', '1000000/min')
+os.environ.setdefault('GENERATE_RATE_GLOBAL', '1000000/min')
 
 import django  # noqa: E402
 

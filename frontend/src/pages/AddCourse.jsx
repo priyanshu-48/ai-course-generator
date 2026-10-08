@@ -55,6 +55,8 @@ const AddCourse = () => {
     } catch (err) {
       if (err.response?.status === 403) {
         setError(err.response.data.error || 'Course limit reached');
+      } else if (err.response?.status === 429) {
+        setError('Too many course requests right now. Please wait a while and try again.');
       } else {
         setError(err.response?.data?.error || 'Failed to create course. Please try again.');
       }
