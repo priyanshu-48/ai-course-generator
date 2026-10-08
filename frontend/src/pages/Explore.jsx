@@ -27,7 +27,7 @@ const Explore = () => {
             Discover public courses created by the community. This feature is coming soon!
           </p>
           <div className="card max-w-md mx-auto">
-            <h3 className="font-semibold text-gray-900 mb-2">What's Coming</h3>
+            <h3 className="font-semibold text-gray-900 mb-2">What&apos;s Coming</h3>
             <ul className="text-left text-gray-600 space-y-2">
               <li className="flex items-start">
                 <svg
