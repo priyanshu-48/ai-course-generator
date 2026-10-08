@@ -86,6 +86,12 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['rest_framework_simplejwt.authentication.JWTAuthentication'],
     'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
+    # Number of reverse proxies in front of the app (Render = 1). 0 ignores X-Forwarded-For (unspoofable).
+    'NUM_PROXIES': int(os.getenv('NUM_PROXIES', '0')),
+    'DEFAULT_THROTTLE_RATES': {
+        'generate_ip': os.getenv('GENERATE_RATE_IP', '10/hour'),
+        'generate_global': os.getenv('GENERATE_RATE_GLOBAL', '100/day'),
+    },
 }
 
 SIMPLE_JWT = {
@@ -138,6 +144,9 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            # fail fast when Redis is unreachable (callers fail open)
+            "SOCKET_CONNECT_TIMEOUT": 2,
+            "SOCKET_TIMEOUT": 2,
         }
     }
 }
