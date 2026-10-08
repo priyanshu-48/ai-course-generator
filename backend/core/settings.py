@@ -135,6 +135,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY', '')
+# gemini-2.0-flash-exp (the old hardcoded model) now returns 404; models get retired, so keep this configurable
+GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-3.8-flash')
 REDIS_URL = os.getenv('REDIS_URL', 'redis://ai-course-redis:6379/0')
 YOUTUBE_CACHE_TTL = 2592000
 
