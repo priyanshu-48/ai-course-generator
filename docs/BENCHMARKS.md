@@ -98,7 +98,8 @@ Backend tests mock Gemini/YouTube, use `mongomock` + `fakeredis`; frontend mocks
 - Course generation was broken in the working tree (`AttributeError`: missing `_generate_gemini_course`).
 - The hard-coded Gemini model `gemini-2.0-flash-exp` returns 404 (retired); `gemini-2.5-flash` is closed to new users. Now configurable (`GEMINI_MODEL`, default `gemini-3.8-flash`). **Any deployment built from the old code cannot generate courses until this is applied.**
 - My retries + the SDK's own 60 s internal retry could exceed Gunicorn's 120 s worker timeout (observed a 182 s call). Calls now have a hard 90 s budget.
-- Daily-quota 429s are no longer retried (it only burns the 20/day quota); the global throttle defaults to 20/day.
+- Daily-quota 429s are no longer retried (it only burns the 20/day quota). The quota is per model, so `GEMINI_FALLBACK_MODELS` are tried in order, and the API returns 503 with a clear message when all are exhausted. Global throttle default: 60/day (3 models × 20).
+- Real check after the fix (console only, not a benchmark): `gemini-3.5-flash` generated a 7-module course in 22.4 s; `gemini-3.7-flash` returned a 500 after ~60 s on the same kind of prompt, so model health varies.
 - Logout returned 400 and rotated refresh tokens stayed valid (blacklist app not installed); fixed with a migration and a frontend change.
 - `DEBUG` defaulted to on; error responses leaked exception text.
 

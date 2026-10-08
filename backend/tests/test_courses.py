@@ -148,3 +148,14 @@ def test_video_lookups_run_concurrently_but_bounded(client, monkeypatch, redis_f
     r = client.post('/api/courses/create/', PAYLOAD, format='json', **H)
     assert r.status_code == 201
     assert 1 < state['peak'] <= views.VIDEO_LOOKUP_WORKERS
+
+
+def test_all_gemini_models_over_quota_returns_503_with_clear_message(client, monkeypatch):
+    from utils.gemini_service import AIQuotaExceeded
+
+    def boom(*a):
+        raise AIQuotaExceeded('PerDay')
+    monkeypatch.setattr('courses.views.gemini_service.generate_course', boom)
+    r = client.post('/api/courses/create/', PAYLOAD, format='json', **H)
+    assert r.status_code == 503
+    assert 'daily AI generation limit' in r.data['error']

@@ -34,6 +34,14 @@ def clean_state():
     yield
 
 
+@pytest.fixture(autouse=True)
+def isolated_gemini(monkeypatch):
+    """No real fallback models (they are live network clients) and no cross-test quota state."""
+    from utils.gemini_service import gemini_service
+    monkeypatch.setattr(gemini_service, 'fallbacks', [])
+    monkeypatch.setattr(gemini_service, 'exhausted_until', {})
+
+
 @pytest.fixture
 def client():
     return APIClient()

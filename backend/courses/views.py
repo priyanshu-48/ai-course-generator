@@ -15,7 +15,7 @@ from .serializers import (
     CourseCreateSerializer,
     SubtopicSerializer
 )
-from utils.gemini_service import gemini_service
+from utils.gemini_service import AIQuotaExceeded, gemini_service
 from utils.throttling import GenerateGlobalThrottle, GenerateIPThrottle
 from utils.youtube_service import youtube_service
 
@@ -135,6 +135,12 @@ class CourseCreateView(APIView):
                 status=status.HTTP_201_CREATED
             )
 
+        except AIQuotaExceeded:
+            logger.warning("Course generation refused: all Gemini models are over their daily quota")
+            return Response(
+                {'error': 'The daily AI generation limit has been reached. Please try again later.'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE
+            )
         except Exception:
             logger.exception("Course generation failed")
             return Response(
