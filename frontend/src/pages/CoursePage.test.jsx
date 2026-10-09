@@ -7,7 +7,7 @@ import CoursePage from './CoursePage';
 vi.mock('../utils/api', () => ({
   coursesAPI: { getCourse: vi.fn(), updateProgress: vi.fn(), toggleSubtopic: vi.fn() },
 }));
-vi.mock('../components/Sidebar', () => ({ default: () => null }));
+vi.mock('../components/Layout', () => ({ default: ({ children }) => <div>{children}</div>, Logo: () => null }));
 import { coursesAPI } from '../utils/api';
 
 const course = () => ({

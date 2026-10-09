@@ -8,6 +8,9 @@ and the React app lets you work through it and track progress.
 The API runs on a free-tier host that sleeps when idle, so the first request after a quiet period can take
 30–60 seconds. The app shows a "waking up" screen while it connects.
 
+![Dashboard](docs/screenshots/dashboard.jpg)
+![Course viewer](docs/screenshots/course.jpg)
+
 > Honest scope note: this is a portfolio project about integrating two slow, quota-limited external APIs
 > reliably (caching, concurrency, retries, throttling, tests, CI, containers). It is not trying to out-do
 > asking a chat assistant for study notes; the extras are persistence, per-lesson progress and real embedded videos.
@@ -140,6 +143,6 @@ bash bench/docker_measure.sh HEAD docs/evidence/mine/docker.txt         # image 
 - Concurrent lesson toggles save the whole course document and can overwrite each other (use targeted Mongo updates).
 - Move generation to a background task queue; it currently blocks a worker for up to ~90 s in the worst case.
 - Course list pagination and a compound `(user_id, -created_at)` index (not measured yet).
-- Frontend test coverage is limited to the key flows.
+- Frontend tests mock the API layer; there are no browser end-to-end tests.
 
 MIT License.

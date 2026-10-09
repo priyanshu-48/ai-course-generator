@@ -1,26 +1,30 @@
-# regenerated at commit 6c691e9 on 2026-10-09T01:39:26+05:30: cd frontend && npm run test:coverage
+# regenerated at 3eab403 + UI overhaul (uncommitted at run time) on 2026-10-09T12:59:18+05:30: cd frontend && npm run test:coverage
 stderr | src/components/ProtectedRoute.test.jsx > redirects anonymous users to /login
- ✓ src/components/ProtectedRoute.test.jsx (3 tests) 34ms
-stderr | src/pages/AddCourse.test.jsx > submits the form and navigates to the new course
- ✓ src/utils/api.test.js (2 tests) 7ms
- ✓ src/context/AuthContext.test.jsx (7 tests) 50ms
+ ✓ src/components/ProtectedRoute.test.jsx (3 tests) 53ms
+ ✓ src/utils/api.test.js (2 tests) 11ms
+ ✓ src/context/AuthContext.test.jsx (7 tests) 67ms
+stderr | src/pages/Dashboard.test.jsx > pings the configured backend, then shows the empty state
+stderr | src/pages/AuthPages.test.jsx > login: signs in and goes home
 stderr | src/pages/CoursePage.test.jsx > loads and renders the course with an embedded video
- ✓ src/pages/CoursePage.test.jsx (4 tests) 299ms
- ✓ src/pages/AddCourse.test.jsx (3 tests) 2330ms
- Test Files  5 passed (5)
-      Tests  19 passed (19)
-All files          |   37.61 |    70.32 |   42.85 |   37.61 |                   
-  App.jsx          |       0 |        0 |       0 |       0 | 1-34              
+stderr | src/pages/AddCourse.test.jsx > submits the form and navigates to the new course
+stderr | src/components/Layout.test.jsx > renders navigation and the page content
+ ✓ src/components/Layout.test.jsx (2 tests) 215ms
+ ✓ src/pages/CoursePage.test.jsx (4 tests) 379ms
+ ✓ src/pages/AddCourse.test.jsx (3 tests) 2324ms
+ ✓ src/pages/AuthPages.test.jsx (4 tests) 2503ms
+ ✓ src/pages/Dashboard.test.jsx (7 tests) 4729ms
+ Test Files  8 passed (8)
+      Tests  32 passed (32)
+All files          |   93.55 |    84.61 |   69.35 |   93.55 |                   
+  App.jsx          |       0 |        0 |       0 |       0 | 1-30              
+  AuthShell.jsx    |     100 |      100 |     100 |     100 |                   
+  Layout.jsx       |     100 |    88.88 |     100 |     100 | 71                
   ...ctedRoute.jsx |     100 |      100 |     100 |     100 |                   
-  Sidebar.jsx      |       0 |        0 |       0 |       0 | 1-114             
   AuthContext.jsx  |   88.88 |       75 |   85.71 |   88.88 | 60-67,81,94-96    
-  ...VisitPopup.js |       0 |        0 |       0 |       0 | 1-17              
-  AddCourse.jsx    |   96.73 |       75 |      75 |   96.73 | 48-52,57          
-  CoursePage.jsx   |    95.6 |    82.05 |   77.77 |    95.6 | ...,82-85,282-284 
-  Dashboard.jsx    |       0 |        0 |       0 |       0 | 1-265             
-  Explore.jsx      |       0 |        0 |       0 |       0 | 1-82              
-  Landing.jsx      |       0 |        0 |       0 |       0 | 1-126             
-  Login.jsx        |       0 |        0 |       0 |       0 | 1-122             
-  Register.jsx     |       0 |        0 |       0 |       0 | 1-172             
-  Upgrade.jsx      |       0 |        0 |       0 |       0 | 1-189             
+  AddCourse.jsx    |   99.37 |    86.66 |     100 |   99.37 | 55                
+  CoursePage.jsx   |   95.02 |    86.53 |   58.33 |   95.02 | ...3-86,92-94,278 
+  Dashboard.jsx    |    94.3 |    90.38 |   91.66 |    94.3 | ...47-152,193-195 
+  Login.jsx        |   98.92 |     87.5 |     100 |   98.92 | 38                
+  Register.jsx     |   95.55 |    76.92 |     100 |   95.55 | 48,52-53,55       
   api.js           |   90.69 |    57.14 |    8.33 |   90.69 | 56-61,63-64       
+  categories.js    |     100 |       75 |     100 |     100 | 17                
