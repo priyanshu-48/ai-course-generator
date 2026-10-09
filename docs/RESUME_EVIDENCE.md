@@ -2,7 +2,7 @@
 
 Only the "Verified" rows may be quoted on a resume. Method, environment and limitations: [BENCHMARKS.md](BENCHMARKS.md). Raw outputs live in `docs/evidence/`.
 
-**Last verified:** 2026-10-09 at commit `6c691e9` on `main` (frontend row: UI overhaul branch, re-verify after merge). CI for that commit: [passing](https://github.com/priyanshu-48/ai-course-generator/actions/runs/37836654489). Every number below was cross-checked against its raw file on that date.
+**Last verified:** 2026-10-09 at commit `6c691e9` on `main` (frontend row verified at `d0aa509`; live UI confirmed deployed on 2026-10-09). CI for that commit: [passing](https://github.com/priyanshu-48/ai-course-generator/actions/runs/37836654489). Every number below was cross-checked against its raw file on that date.
 Baseline for all before/after comparisons: git tag `baseline-benchmark` (`f68b9c6`).
 
 ## Claims table
@@ -10,7 +10,7 @@ Baseline for all before/after comparisons: git tag `baseline-benchmark` (`f68b9c
 | Claim | Verified value | Command | Commit | Raw output | Caveats |
 |---|---|---|---|---|---|
 | Backend test suite | **63 tests, 94 % line coverage** (`courses`, `users`, `utils`) | `cd backend && pytest` | `6c691e9` | `evidence/final/backend_coverage.txt` | Gemini/YouTube mocked; `mongomock` / `fakeredis`, not real Mongo/Redis |
-| Frontend test suite | **32 tests; 93.6 % line coverage** (all files except the 30-line `App.jsx` router) | `cd frontend && npm run test:coverage` | UI overhaul PR (see `main` after merge) | `evidence/final/frontend_coverage.txt` | Coverage jumped from 37.6 % partly because untested placeholder pages were deleted. API layer is mocked; no browser end-to-end tests |
+| Frontend test suite | **32 tests; 93.6 % line coverage** (all files except the 30-line `App.jsx` router) | `cd frontend && npm run test:coverage` | `d0aa509` | `evidence/final/frontend_coverage.txt` | Coverage jumped from 37.6 % partly because untested placeholder pages were deleted. API layer is mocked; no browser end-to-end tests |
 | CI | Backend tests, frontend lint/test/build and Docker build pass on GitHub Actions | `.github/workflows/ci.yml` | run [37836654489](https://github.com/priyanshu-48/ai-course-generator/actions/runs/37836654489) | GitHub run page | Re-check the latest run before applying |
 | Concurrent YouTube lookups, generation latency | p50 **7.23 s → 3.62 s (−50 %)**; p95 7.25 s → 3.63 s | `cd backend && python -m bench.bench_generation --out …` | `5afb01b` → `2fb164a`; re-run at `f0254df`: 3.61 s | `evidence/baseline/`, `evidence/after_concurrent_youtube/`, `evidence/final/` | **Simulated APIs**: Gemini mocked 3.0 s, YouTube 0.15 s/call, 28 lookups, 30 runs. Always say "simulated" |
 | Same change on real YouTube | 20 lookups **16.5 s → 3.1 s (5.3×)**; real per-call latency mean 0.83 s (p95 0.90 s) | `python -m bench.bench_real --synthetic-terms --yt-cap 40 --out …` | `a19371b` | `evidence/real/youtube_real.json` | Real API, one run per group, different query strings in each group, one machine |
