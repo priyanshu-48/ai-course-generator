@@ -87,9 +87,9 @@ Quote the **50-VU row (~5.9× throughput)**. `runserver`'s ~44 ms floor at one u
 | Package | Tests | Coverage (lines) | Evidence |
 |---|---|---|---|
 | Backend (pytest, `courses`+`users`+`utils`) | **63** | **94 %** | `evidence/final/backend_coverage.txt` |
-| Frontend (Vitest) | **19** | **37.6 %** overall; key flows: AddCourse 97 %, CoursePage 96 %, AuthContext 89 %, ProtectedRoute 100 %, api.js 91 % | `evidence/final/frontend_coverage.txt` |
+| Frontend (Vitest) | **32** | **93.6 %** overall (all non-entry files; `App.jsx` is untested) | `evidence/final/frontend_coverage.txt` |
 
-Backend tests mock Gemini/YouTube, use `mongomock` + `fakeredis`; frontend mocks the API module. Index/`explain()` behaviour on real MongoDB is **not** covered by any test.
+Backend tests mock Gemini/YouTube, use `mongomock` + `fakeredis`; frontend mocks the API module. Frontend coverage rose from 37.6 % (19 tests) to 93.6 % (32 tests) in the UI overhaul, partly because untested placeholder pages (Landing, Explore, Upgrade) were deleted, not only because tests were added. Index/`explain()` behaviour on real MongoDB is **not** covered by any test.
 
 ---
 

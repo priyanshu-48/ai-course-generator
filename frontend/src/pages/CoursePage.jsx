@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import Layout from '../components/Layout';
 import { coursesAPI } from '../utils/api';
+import { categoryColor } from '../utils/categories';
 
 const CoursePage = () => {
   const { id } = useParams();
@@ -57,7 +58,7 @@ const CoursePage = () => {
 
     try {
       const response = await coursesAPI.toggleSubtopic(id, currentModuleIndex, currentSubtopicIndex);
-      
+
       setCourse((prevCourse) => {
         const newCourse = { ...prevCourse };
         newCourse.modules[currentModuleIndex].subtopics[currentSubtopicIndex] = response.data;
@@ -74,7 +75,7 @@ const CoursePage = () => {
       const encodedSearch = encodeURIComponent(searchTerm);
       return `https://www.youtube.com/results?search_query=${encodedSearch}`;
     }
-    
+
     if (url.includes('youtube.com/watch?v=')) {
       const videoId = url.split('v=')[1]?.split('&')[0];
       return `https://www.youtube.com/embed/${videoId}`;
@@ -85,103 +86,96 @@ const CoursePage = () => {
     return url;
   };
 
+  const lessons = course ? course.modules.flatMap((module, m) => module.subtopics.map((_, s) => [m, s])) : [];
+  const position = lessons.findIndex(([m, s]) => m === currentModuleIndex && s === currentSubtopicIndex);
+  const goTo = (offset) => {
+    const target = lessons[position + offset];
+    if (target) handleSubtopicClick(target[0], target[1]);
+  };
+  const doneCount = course
+    ? course.modules.reduce((n, module) => n + module.subtopics.filter((s) => s.completed).length, 0)
+    : 0;
+
   if (loading) {
     return (
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="loading-spinner"></div>
+      <Layout wide>
+        <div className="flex justify-center py-32">
+          <div className="loading-spinner" />
         </div>
-      </div>
+      </Layout>
     );
   }
 
   if (error || !course) {
     return (
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <p className="text-red-600 mb-4">{error || 'Course not found'}</p>
-            <button onClick={() => navigate('/dashboard')} className="btn-primary">
-              Back to Dashboard
-            </button>
-          </div>
+      <Layout>
+        <div className="card mx-auto max-w-md text-center">
+          <p className="mb-5 text-danger">{error || 'Course not found'}</p>
+          <button onClick={() => navigate('/')} className="btn-primary">
+            Back to dashboard
+          </button>
         </div>
-      </div>
+      </Layout>
     );
   }
 
   const currentSubtopic = getCurrentSubtopic();
+  const accent = categoryColor(course.category);
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
-
-      <div className="flex-1 flex">
-        <div className="w-80 bg-white border-r border-gray-200 overflow-y-auto">
-          <div className="p-6 border-b border-gray-200">
+    <Layout wide>
+      <div className="grid gap-6 lg:grid-cols-[21rem_minmax(0,1fr)]">
+        <aside className="card flex max-h-[calc(100vh-7.5rem)] flex-col !p-0 lg:sticky lg:top-24 lg:self-start">
+          <div className="border-b border-line/60 p-5">
             <button
-              onClick={() => navigate('/dashboard')}
-              className="text-gray-600 hover:text-gray-900 mb-4 flex items-center text-sm"
+              onClick={() => navigate('/')}
+              className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-fg"
             >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
               Back
             </button>
-            <h2 className="text-xl font-bold text-gray-900">{course.title}</h2>
+            <h2 className="text-lg font-semibold leading-snug">{course.title}</h2>
             <div className="mt-4">
-              <div className="flex justify-between text-xs text-gray-600 mb-2">
-                <span>Progress</span>
-                <span className="font-medium">{course.progress_percentage}%</span>
+              <div className="mb-1.5 flex justify-between text-xs text-muted">
+                <span>
+                  {doneCount} of {lessons.length} lessons done
+                </span>
+                <span className="font-medium text-fg">{course.progress_percentage}%</span>
               </div>
-              <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary-500 transition-all duration-300"
-                  style={{ width: `${course.progress_percentage}%` }}
-                ></div>
+              <div className="progress-track">
+                <div className="progress-fill" style={{ width: `${course.progress_percentage}%`, background: accent }} />
               </div>
             </div>
           </div>
 
-          <div className="p-4">
+          <div className="space-y-5 overflow-y-auto p-3">
             {course.modules.map((module, moduleIndex) => (
-              <div key={module.id} className="mb-4">
-                <h3 className="font-semibold text-gray-900 mb-2 px-2">
+              <div key={moduleIndex}>
+                <h3 className="eyebrow mb-1.5 px-2">
                   {moduleIndex + 1}. {module.title}
                 </h3>
-                <div className="space-y-1">
-                  {module.subtopics.map((subtopic, subtopicIndex) => (
-                    <button
-                      key={subtopic.id}
-                      onClick={() => handleSubtopicClick(moduleIndex, subtopicIndex)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                        currentModuleIndex === moduleIndex &&
-                        currentSubtopicIndex === subtopicIndex
-                          ? 'bg-primary-100 text-primary-700 font-medium'
-                          : 'text-gray-700 hover:bg-gray-100'
-                      }`}
-                    >
-                      <div className="flex items-center">
-                        <div
-                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center mr-2 flex-shrink-0 ${
-                            subtopic.completed
-                              ? 'border-green-500 bg-green-500'
-                              : 'border-gray-300'
+                <div className="space-y-0.5">
+                  {module.subtopics.map((subtopic, subtopicIndex) => {
+                    const active = currentModuleIndex === moduleIndex && currentSubtopicIndex === subtopicIndex;
+                    return (
+                      <button
+                        key={subtopicIndex}
+                        onClick={() => handleSubtopicClick(moduleIndex, subtopicIndex)}
+                        aria-current={active ? 'true' : undefined}
+                        className={`flex w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                          active ? 'bg-panel-2 text-fg' : 'text-muted hover:bg-panel-2/60 hover:text-fg'
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-full border-2 ${
+                            subtopic.completed ? 'border-accent bg-accent' : active ? 'border-accent' : 'border-line'
                           }`}
+                          aria-hidden="true"
                         >
                           {subtopic.completed && (
-                            <svg
-                              className="w-3 h-3 text-white"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
+                            <svg className="h-2.5 w-2.5 text-ink" fill="currentColor" viewBox="0 0 20 20">
                               <path
                                 fillRule="evenodd"
                                 d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
@@ -189,105 +183,104 @@ const CoursePage = () => {
                               />
                             </svg>
                           )}
-                        </div>
+                        </span>
                         <span className="line-clamp-2">{subtopic.title}</span>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </aside>
 
-        <div className="flex-1 overflow-y-auto">
+        <section className="min-w-0">
           {currentSubtopic ? (
-            <div className="p-8">
-              <div className="max-w-4xl mx-auto">
-                <div className="mb-6">
-                  {currentSubtopic.video_url.startsWith('search:') ? (
-                    <div className="aspect-video bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg flex flex-col items-center justify-center text-white p-8">
-                      <svg className="w-16 h-16 mb-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                      </svg>
-                      <h3 className="text-xl font-semibold mb-2">Find Video on YouTube</h3>
-                      <p className="text-center mb-4 text-primary-100">
-                        Search for: &quot;{currentSubtopic.video_url.replace('search:', '')}&quot;
-                      </p>
-                      <a
-                        href={getVideoEmbedUrl(currentSubtopic.video_url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-6 py-3 bg-white text-primary-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                      >
-                        Search on YouTube →
-                      </a>
-                    </div>
-                  ) : (
-                    <div className="aspect-video bg-black rounded-lg overflow-hidden">
-                      <iframe
-                        src={getVideoEmbedUrl(currentSubtopic.video_url)}
-                        className="w-full h-full"
-                        allowFullScreen
-                        title={currentSubtopic.title}
-                      ></iframe>
-                    </div>
-                  )}
+            <>
+              {currentSubtopic.video_url.startsWith('search:') ? (
+                <div
+                  className="flex aspect-video flex-col items-center justify-center rounded-2xl border border-line/60 p-8 text-center"
+                  style={{ background: `linear-gradient(135deg, ${accent}33, transparent 70%), #1d1e31` }}
+                >
+                  <svg className="mb-4 h-12 w-12 text-fg/80" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  <h3 className="text-lg font-semibold">Find a video on YouTube</h3>
+                  <p className="mt-1 text-sm text-muted">
+                    Search for: &quot;{currentSubtopic.video_url.replace('search:', '')}&quot;
+                  </p>
+                  <a
+                    href={getVideoEmbedUrl(currentSubtopic.video_url)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-primary mt-5"
+                  >
+                    Search on YouTube →
+                  </a>
+                </div>
+              ) : (
+                <div className="aspect-video overflow-hidden rounded-2xl border border-line/60 bg-black shadow-card">
+                  <iframe
+                    src={getVideoEmbedUrl(currentSubtopic.video_url)}
+                    className="h-full w-full"
+                    allowFullScreen
+                    title={currentSubtopic.title}
+                  ></iframe>
+                </div>
+              )}
+
+              <div className="card mt-5">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="eyebrow" style={{ color: accent }}>
+                      Lesson {position + 1} of {lessons.length}
+                    </p>
+                    <h1 className="mt-1.5 text-2xl font-bold tracking-tight">{currentSubtopic.title}</h1>
+                  </div>
+                  <button
+                    onClick={handleToggleComplete}
+                    className={currentSubtopic.completed ? 'btn-secondary !border-accent/50 !text-accent' : 'btn-primary'}
+                  >
+                    {currentSubtopic.completed ? (
+                      <>
+                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                          <path
+                            fillRule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        Completed
+                      </>
+                    ) : (
+                      'Mark as Complete'
+                    )}
+                  </button>
                 </div>
 
-                <div className="card">
-                  <div className="flex justify-between items-start mb-4">
-                    <h1 className="text-2xl font-bold text-gray-900">
-                      {currentSubtopic.title}
-                    </h1>
-                    <button
-                      onClick={handleToggleComplete}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        currentSubtopic.completed
-                          ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                          : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
-                    >
-                      {currentSubtopic.completed ? (
-                        <span className="flex items-center">
-                          <svg
-                            className="w-5 h-5 mr-2"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                          Completed
-                        </span>
-                      ) : (
-                        'Mark as Complete'
-                      )}
-                    </button>
-                  </div>
+                <p className="mt-5 whitespace-pre-line leading-relaxed text-fg/85">{currentSubtopic.content}</p>
 
-                  <div className="prose max-w-none">
-                    <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-                      {currentSubtopic.content}
-                    </p>
-                  </div>
+                <div className="mt-8 flex justify-between gap-3 border-t border-line/60 pt-5">
+                  <button onClick={() => goTo(-1)} disabled={position <= 0} className="btn-secondary">
+                    ← Previous lesson
+                  </button>
+                  <button
+                    onClick={() => goTo(1)}
+                    disabled={position < 0 || position >= lessons.length - 1}
+                    className="btn-secondary"
+                  >
+                    Next lesson →
+                  </button>
                 </div>
               </div>
-            </div>
+            </>
           ) : (
-            <div className="flex items-center justify-center h-full">
-              <p className="text-gray-500">Select a topic to start learning</p>
-            </div>
+            <div className="card py-16 text-center text-muted">Select a lesson to start learning</div>
           )}
-        </div>
+        </section>
       </div>
-    </div>
+    </Layout>
   );
 };
 
 export default CoursePage;
-

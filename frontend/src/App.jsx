@@ -6,8 +6,6 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AddCourse from './pages/AddCourse';
 import CoursePage from './pages/CoursePage';
-import Explore from './pages/Explore';
-import Upgrade from './pages/Upgrade';
 
 function App() {
   return (
@@ -21,8 +19,6 @@ function App() {
 
           <Route path="/add-course" element={<AddCourse />} />
           <Route path="/course/:id" element={<CoursePage />} />
-          <Route path="/explore" element={<Explore />} />
-          <Route path="/upgrade" element={<Upgrade />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
