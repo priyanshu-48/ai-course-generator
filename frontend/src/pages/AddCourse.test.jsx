@@ -5,7 +5,7 @@ import { vi, it, expect, beforeEach } from 'vitest';
 import AddCourse from './AddCourse';
 
 vi.mock('../utils/api', () => ({ coursesAPI: { createCourse: vi.fn() } }));
-vi.mock('../components/Sidebar', () => ({ default: () => null }));
+vi.mock('../components/Layout', () => ({ default: ({ children }) => <div>{children}</div>, Logo: () => null }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: null, updateUser: vi.fn() }) }));
 import { coursesAPI } from '../utils/api';
 

@@ -3,62 +3,91 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-ink font-sans text-fg antialiased;
+    background-image:
+      radial-gradient(900px 500px at 8% -10%, rgba(76, 211, 221, 0.09), transparent 60%),
+      radial-gradient(800px 480px at 95% -5%, rgba(255, 138, 92, 0.07), transparent 60%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(76, 211, 221, 0.3);
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent/70 ring-offset-2 ring-offset-ink;
   }
 }
 
 @layer components {
-  .btn-primary {
-    @apply px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
-  }
-  
-  .btn-secondary {
-    @apply px-6 py-3 bg-white text-primary-600 border-2 border-primary-600 rounded-lg font-medium hover:bg-primary-50 transition-colors duration-200;
-  }
-  
-  .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all duration-200;
-  }
-  
   .card {
-    @apply bg-white rounded-xl shadow-sm border border-gray-200 p-6;
+    @apply rounded-2xl border border-line/60 bg-panel p-6 shadow-card;
   }
-  
-  .sidebar-link {
-    @apply flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-primary-50 hover:text-primary-700 transition-colors duration-200;
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
   }
-  
-  .sidebar-link-active {
-    @apply bg-primary-100 text-primary-700 font-medium;
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-5 py-2.5 text-sm font-semibold text-ink transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-panel-2 px-5 py-2.5 text-sm font-medium text-fg transition hover:border-accent/50 hover:text-accent disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-line bg-ink/70 px-4 py-3 text-sm text-fg placeholder:text-faint outline-none transition focus:border-accent/70 focus:ring-2 focus:ring-accent/30 disabled:opacity-60;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full bg-violet-bg px-2.5 py-0.5 text-[11px] font-medium text-violet;
+  }
+
+  .progress-track {
+    @apply h-2 w-full overflow-hidden rounded-full bg-panel-2;
+  }
+
+  .progress-fill {
+    @apply h-full rounded-full bg-accent transition-all duration-500;
+  }
+
+  .alert-error {
+    @apply rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger;
   }
 }
 
-/* Scrollbar Styling */
+/* Scrollbars */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded-full;
+  @apply rounded-full bg-panel-2;
+  border: 2px solid #0b0c1c;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-500;
+  @apply bg-line;
 }
 
 .loading-spinner {
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  border: 3px solid rgba(255, 255, 255, 0.12);
   border-radius: 50%;
-  border-top-color: #0ea5e9;
+  border-top-color: #4cd3dd;
   width: 40px;
   height: 40px;
-  animation: spin 1s linear infinite;
+  animation: spin 0.9s linear infinite;
 }
 
 @keyframes spin {
@@ -67,8 +96,8 @@
   }
 }
 
-
-
-
-
-
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation-duration: 3s;
+  }
+}

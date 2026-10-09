@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import { Link, useNavigate } from 'react-router-dom';
+import Layout from '../components/Layout';
 import { coursesAPI } from '../utils/api';
-import { useAuth } from '../context/AuthContext';
+import { categoryColor } from '../utils/categories';
 
 const CATEGORIES = [
   'AI',
@@ -17,6 +17,13 @@ const CATEGORIES = [
   'Other',
 ];
 
+const Label = ({ htmlFor, children, optional }) => (
+  <label htmlFor={htmlFor} className="mb-2 flex items-baseline justify-between text-sm font-medium">
+    <span>{children}</span>
+    {optional && <span className="text-xs font-normal text-faint">Optional</span>}
+  </label>
+);
+
 const AddCourse = () => {
   const [formData, setFormData] = useState({
     title: '',
@@ -27,7 +34,6 @@ const AddCourse = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -43,14 +49,6 @@ const AddCourse = () => {
 
     try {
       const response = await coursesAPI.createCourse(formData);
-      
-      if (user) {
-        updateUser({
-          ...user,
-          courses_created: user.courses_created + 1,
-        });
-      }
-
       navigate(`/course/${response.data.id}`);
     } catch (err) {
       if (err.response?.status === 403) {
@@ -67,76 +65,64 @@ const AddCourse = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar />
+    <Layout>
+      <div className="mx-auto max-w-2xl">
+        <Link to="/" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted transition hover:text-fg">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to dashboard
+        </Link>
 
-      <div className="flex-1 p-8">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-gray-600 hover:text-gray-900 mb-4 flex items-center"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
+        <h1 className="text-3xl font-bold tracking-tight">Create a new course</h1>
+        <p className="mt-1 text-muted">Describe what you want to learn. The AI designs the modules, lessons and picks a video for each one.</p>
+
+        <div className="card mt-6">
+          {error && (
+            <div className="alert-error mb-6" role="alert">
+              {error}
+            </div>
+          )}
+
+          {loading && (
+            <div className="mb-6 flex items-center gap-3 rounded-xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm" role="status">
+              <div className="loading-spinner flex-shrink-0" style={{ width: '20px', height: '20px', borderWidth: '2px' }} />
+              <span>
+                <span className="font-medium text-accent">Building your course…</span>{' '}
+                <span className="text-muted">designing the curriculum and finding videos, usually 30–60 seconds.</span>
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <Label htmlFor="title">Course title</Label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="e.g. Introduction to Deep Learning"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="category">Category</Label>
+              <div className="relative">
+                <span
+                  className="pointer-events-none absolute left-4 top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full"
+                  style={{ background: categoryColor(formData.category) }}
                 />
-              </svg>
-              Back to Dashboard
-            </button>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Course</h1>
-            <p className="text-gray-600 mt-1">
-              Fill in the details and let AI generate a comprehensive course for you
-            </p>
-          </div>
-
-          <div className="card">
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
-                {error}
-              </div>
-            )}
-
-            {loading && (
-              <div className="bg-primary-50 border border-primary-200 text-primary-700 px-4 py-3 rounded-lg mb-6">
-                <div className="flex items-center">
-                  <div className="loading-spinner mr-3" style={{ width: '20px', height: '20px' }}></div>
-                  <span>Generating your course with AI... This may take 10-30 seconds.</span>
-                </div>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course Title *
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="e.g., Introduction to Deep Learning"
-                  required
-                  disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Category *
-                </label>
                 <select
                   id="category"
                   name="category"
                   value={formData.category}
                   onChange={handleChange}
-                  className="input-field"
+                  className="input-field !pl-9"
                   required
                   disabled={loading}
                 >
@@ -147,77 +133,50 @@ const AddCourse = () => {
                   ))}
                 </select>
               </div>
+            </div>
 
-              <div>
-                <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Course Description *
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  className="input-field"
-                  rows="4"
-                  placeholder="Describe what this course should cover..."
-                  required
-                  disabled={loading}
-                ></textarea>
-                <p className="text-sm text-gray-500 mt-2">
-                  Be specific about the topics you want to learn. The AI will use this to generate
-                  your course structure.
-                </p>
-              </div>
+            <div>
+              <Label htmlFor="description">Course description</Label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                className="input-field"
+                rows="4"
+                placeholder="Describe what this course should cover…"
+                required
+                disabled={loading}
+              ></textarea>
+              <p className="mt-2 text-xs text-muted">The more specific you are about topics and level, the better the structure.</p>
+            </div>
 
-              <div>
-                <label htmlFor="thumbnail" className="block text-sm font-medium text-gray-700 mb-2">
-                  Thumbnail URL (Optional)
-                </label>
-                <input
-                  type="url"
-                  id="thumbnail"
-                  name="thumbnail"
-                  value={formData.thumbnail}
-                  onChange={handleChange}
-                  className="input-field"
-                  placeholder="https://example.com/image.jpg"
-                  disabled={loading}
-                />
-              </div>
+            <div>
+              <Label htmlFor="thumbnail" optional>
+                Thumbnail URL
+              </Label>
+              <input
+                type="url"
+                id="thumbnail"
+                name="thumbnail"
+                value={formData.thumbnail}
+                onChange={handleChange}
+                className="input-field"
+                placeholder="https://example.com/image.jpg"
+                disabled={loading}
+              />
+            </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-primary w-full"
-                >
-                  {loading ? (
-                    <span className="flex items-center justify-center">
-                      <div
-                        className="loading-spinner mr-3"
-                        style={{ width: '20px', height: '20px', borderWidth: '2px' }}
-                      ></div>
-                      Generating Course...
-                    </span>
-                  ) : (
-                    'Generate Course with AI'
-                  )}
-                </button>
-                <p className="text-xs text-gray-500 text-center mt-3">
-                  This will use 1 of your {user?.course_limit || 3} available course slots
-                </p>
-              </div>
-            </form>
-          </div>
+            <div className="border-t border-line/60 pt-6">
+              <button type="submit" disabled={loading} className="btn-primary w-full !py-3">
+                {loading ? 'Generating course…' : 'Generate course with AI'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 
 export default AddCourse;
-
-
-
-
-
