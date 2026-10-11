@@ -8,7 +8,7 @@ Every number here comes from a command whose raw output is saved under `docs/evi
 - **REAL** = real Gemini / YouTube calls with my keys.
 - **DERIVED** = arithmetic on measured components, not itself measured. Do not quote as a measurement.
 
-Baseline = git tag `baseline-benchmark` (`f68b9c6`: the repo after fixing the broken Gemini service and adding tests/CI, before any optimisation).
+Baseline = git tag `baseline-benchmark` (`ee3caa4`: the repo after fixing the broken Gemini service and adding tests/CI, before any optimisation).
 Benchmarks started at this commit because the previous working tree could not generate a course at all (see *Fixes found along the way*).
 
 ---
@@ -27,8 +27,8 @@ Course shape 7 modules × 4 subtopics = **28 YouTube lookups**; Gemini mocked at
 
 - YouTube calls per course: 28 sequential (peak concurrency **1**) → 28, up to **8** at a time. Concurrency does not reduce calls; the cache does (warm cache: 28 → 0, 100 % avoided).
 - Own-code time after removing the mocked Gemini 3.0 s: 4.23 s → 0.62 s (−85 %).
-- Re-run at the final HEAD (`f0254df`, includes retries/throttle/etc.): no-cache p50 **3.610 s**: no regression (`evidence/final/`).
-- Evidence: `evidence/baseline/generation_bench.*` (commit `5afb01b`), `evidence/after_concurrent_youtube/` (`2fb164a`), `evidence/final/` (`f0254df`).
+- Re-run at the final HEAD (`cce44d0`, includes retries/throttle/etc.): no-cache p50 **3.610 s**: no regression (`evidence/final/`).
+- Evidence: `evidence/baseline/generation_bench.*` (commit `1cc944e`), `evidence/after_concurrent_youtube/` (`431eba5`), `evidence/final/` (`cce44d0`).
 
 **Cache effect, same code (SIM):** cold → warm YouTube cache p50 7.279 s → 3.011 s = **−58.6 %** at 0.15 s/lookup. This is the closest thing to the old "Redis" claim, and it is **not 26 %**. It depends entirely on the assumed latencies, so it is only meaningful with the REAL numbers in §4.
 
@@ -36,7 +36,7 @@ Course shape 7 modules × 4 subtopics = **28 YouTube lookups**; Gemini mocked at
 
 `python -m bench.bench_resilience`: seeded RNG, 2000 trials, each attempt fails with probability 20 % (YouTube: HTTP 503; Gemini: malformed JSON or `ServiceUnavailable`). Backoff sleeps skipped.
 
-| | Baseline (`04e07d6`) | After retries (`7d36d4e`) |
+| | Baseline (`7f7cdc1`) | After retries (`f54e0e5`) |
 |---|---|---|
 | YouTube lookup success | 81.0 % | **99.5 %** |
 | Gemini generation success | 81.0 % | **99.5 %** |
@@ -48,7 +48,7 @@ At a 50 % failure rate: 88.5 % success, 1.72 attempts/call (`evidence/after_retr
 
 Builds: `bash backend/bench/docker_measure.sh <ref> <out>`: clean `git worktree` checkout, `--no-cache`, 3 runs. (My first baseline accidentally included a local `.venv`; it is kept as `docker_build_INVALID_contaminated.txt` and not used.)
 
-| Metric | Baseline `f68b9c6` | After `27589da` | Change |
+| Metric | Baseline `ee3caa4` | After `90872fb` | Change |
 |---|---|---|---|
 | Build time (3 runs) | 99 / 91 / 88 s (median 91) | 43 / 46 / 52 s (median 46) | ≈ −49 % |
 | Image size, `docker image inspect` | 198.5 MB | 80.8 MB | **−59.3 %** |
@@ -70,7 +70,7 @@ Quote the **50-VU row (~5.9× throughput)**. `runserver`'s ~44 ms floor at one u
 
 `python -m bench.bench_real` (never touches MongoDB or Redis).
 
-**YouTube (REAL, `evidence/real/youtube_real.json`, commit `a19371b`):** realistic made-up lesson queries, caches bypassed.
+**YouTube (REAL, `evidence/real/youtube_real.json`, commit `6de0a60`):** realistic made-up lesson queries, caches bypassed.
 - Per-call latency, 20 sequential calls: mean **0.826 s**, p50 0.816, p95 0.900, min 0.693, max 0.964, stdev 0.062.
 - 20 lookups sequential: **16.5 s**; 20 lookups concurrent (8 workers): **3.1 s** (−81 %, 5.3×). One run each (wall time), different query strings in each group; all 40 resolved.
 - YouTube is therefore ~5× slower per call than the 0.15 s I simulated; the simulated percentages understate the absolute seconds saved.

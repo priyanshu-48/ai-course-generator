@@ -1,7 +1,7 @@
 {
   "meta": {
     "label": "SIMULATED transient failures (seeded RNG); not real API failure rates",
-    "commit": "04e07d6",
+    "commit": "7f7cdc1",
     "dirty": false,
     "date": "2026-10-08T23:23:49+0530",
     "params": {

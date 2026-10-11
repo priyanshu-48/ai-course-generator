@@ -1,4 +1,4 @@
-# docker build measurement: ref=baseline-benchmark (f68b9c6) date=2026-10-08T23:10:37+05:30
+# docker build measurement: ref=baseline-benchmark (ee3caa4) date=2026-10-08T23:10:37+05:30
 # cmd: docker build --no-cache -t acg-measure backend   (clean worktree checkout)
 run1 exit=0 build_seconds=99
 run2 exit=0 build_seconds=91

@@ -1,7 +1,7 @@
 {
   "meta": {
     "label": "REAL Gemini + YouTube APIs; no MongoDB/Redis; unique topics, caches bypassed",
-    "commit": "abaa134",
+    "commit": "6f58660",
     "date": "2026-10-09T00:37:21+0530",
     "model": "gemini-3.8-flash",
     "params": {
